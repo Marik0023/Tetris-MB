@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Magic Tetris</title>
+  <link rel="icon" href="assets/logo.webp" type="image/webp" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Exo+2:wght@300;400;600;700;900&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- PARTICLES -->
+  <div id="particles-container"></div>
+
+  <!-- ===== SETUP SCREEN ===== -->
+  <div id="setup-screen" class="screen active">
+    <div class="setup-container">
+      <div class="logo-wrap">
+        <img src="assets/logo.webp" alt="Magic Tetris" class="logo-img" />
+      </div>
+
+      <div class="setup-card">
+        <h2 class="setup-title">Enter the Magic</h2>
+
+        <div class="form-group">
+          <label>Your Nickname</label>
+          <input type="text" id="nickname-input" placeholder="WizardPlayer42" maxlength="20" autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label>Your Avatar</label>
+          <div class="avatar-upload-area" id="avatar-upload-area">
+            <div class="avatar-preview-wrap">
+              <img id="avatar-preview" src="" alt="" style="display:none" />
+              <div id="avatar-placeholder" class="avatar-placeholder">
+                <span class="upload-icon">🧙</span>
+                <span>Upload Photo</span>
+              </div>
+            </div>
+            <input type="file" id="avatar-input" accept="image/*" style="display:none" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Difficulty</label>
+          <div class="difficulty-grid">
+            <button class="diff-btn" data-diff="easy">
+              <span class="diff-icon">🌱</span>
+              <span class="diff-name">Easy</span>
+              <span class="diff-desc">500ms drop</span>
+            </button>
+            <button class="diff-btn active" data-diff="medium">
+              <span class="diff-icon">⚡</span>
+              <span class="diff-name">Medium</span>
+              <span class="diff-desc">300ms drop</span>
+            </button>
+            <button class="diff-btn" data-diff="hard">
+              <span class="diff-icon">🔥</span>
+              <span class="diff-name">Hard</span>
+              <span class="diff-desc">150ms drop</span>
+            </button>
+            <button class="diff-btn" data-diff="expert">
+              <span class="diff-icon">💀</span>
+              <span class="diff-name">Expert</span>
+              <span class="diff-desc">80ms drop</span>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-start" id="btn-start">
+          <span class="btn-glow"></span>
+          ✨ Start Game
+        </button>
+      </div>
+
+      <!-- TOP PLAYERS PREVIEW -->
+      <div class="leaderboard-preview">
+        <h3>🏆 Top Wizards</h3>
+        <div id="preview-leaderboard" class="preview-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GAME SCREEN ===== -->
+  <div id="game-screen" class="screen">
+    <div class="game-layout">
+
+      <!-- LEFT PANEL -->
+      <div class="side-panel left-panel">
+        <div class="panel-block">
+          <div class="panel-label">HOLD</div>
+          <canvas id="hold-canvas" width="120" height="100"></canvas>
+        </div>
+        <div class="panel-block">
+          <div class="panel-label">SCORE</div>
+          <div class="stat-val" id="score-display">0</div>
+        </div>
+        <div class="panel-block">
+          <div class="panel-label">BEST</div>
+          <div class="stat-val best" id="best-display">0</div>
+        </div>
+        <div class="panel-block">
+          <div class="panel-label">LINES</div>
+          <div class="stat-val" id="lines-display">0</div>
+        </div>
+        <div class="panel-block">
+          <div class="panel-label">LEVEL</div>
+          <div class="stat-val" id="level-display">1</div>
+        </div>
+        <div class="panel-block">
+          <div class="panel-label">RANK</div>
+          <div class="rank-badge" id="rank-display">🔮 Novice</div>
+        </div>
+        <div class="panel-block player-info-mini">
+          <img id="player-avatar-mini" src="" alt="" />
+          <span id="player-nick-mini"></span>
+        </div>
+      </div>
+
+      <!-- GAME BOARD -->
+      <div class="board-wrap">
+        <div class="board-glow-border">
+          <canvas id="game-canvas" width="300" height="600"></canvas>
+        </div>
+        <div id="pause-overlay" class="pause-overlay hidden">
+          <div class="pause-text">⏸ PAUSED</div>
+          <button class="btn-resume" id="btn-resume">▶ Resume</button>
+        </div>
+        <!-- Mobile Controls -->
+        <div class="mobile-controls" id="mobile-controls">
+          <div class="ctrl-row">
+            <button class="ctrl-btn" id="ctrl-hold" title="Hold">🔄</button>
+            <button class="ctrl-btn" id="ctrl-rotate" title="Rotate">↻</button>
+            <button class="ctrl-btn" id="ctrl-pause" title="Pause">⏸</button>
+          </div>
+          <div class="ctrl-row">
+            <button class="ctrl-btn big" id="ctrl-left" title="Left">◀</button>
+            <button class="ctrl-btn big" id="ctrl-down" title="Soft Drop">▼</button>
+            <button class="ctrl-btn big" id="ctrl-right" title="Right">▶</button>
+          </div>
+          <div class="ctrl-row">
+            <button class="ctrl-btn hard-drop" id="ctrl-hard" title="Hard Drop">⬇️ DROP</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="side-panel right-panel">
+        <div class="panel-block">
+          <div class="panel-label">NEXT</div>
+          <canvas id="next-canvas" width="120" height="100"></canvas>
+        </div>
+        <div class="panel-block">
+          <div class="panel-label">DIFF</div>
+          <div class="diff-badge" id="diff-badge">MEDIUM</div>
+        </div>
+        <div class="panel-block">
+          <div class="panel-label">CONTROLS</div>
+          <div class="controls-hint">
+            <div>← → Move</div>
+            <div>↑ Rotate</div>
+            <div>↓ Soft Drop</div>
+            <div>Space Hard Drop</div>
+            <div>C Hold</div>
+            <div>P Pause</div>
+          </div>
+        </div>
+        <button class="btn-quit" id="btn-quit">🚪 Quit</button>
+      </div>
+    </div>
+
+    <!-- Line clear flash -->
+    <div id="line-flash" class="line-flash hidden"></div>
+    <!-- Score popup -->
+    <div id="score-popup" class="score-popup hidden"></div>
+  </div>
+
+  <!-- ===== GAME OVER SCREEN ===== -->
+  <div id="gameover-screen" class="screen">
+    <div class="gameover-container">
+      <h1 class="gameover-title">Game Over!</h1>
+
+      <!-- Score Card -->
+      <div class="score-card-wrap">
+        <canvas id="score-card-canvas" width="400" height="500"></canvas>
+      </div>
+
+      <div class="gameover-actions">
+        <button class="btn-action btn-download" id="btn-download">💾 Save Card</button>
+        <button class="btn-action btn-again" id="btn-again">🔄 Play Again</button>
+        <button class="btn-action btn-menu" id="btn-menu">🏠 Menu</button>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="leaderboard-section">
+        <h3>🏆 Top Wizards</h3>
+        <div id="full-leaderboard" class="leaderboard-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/leaderboard.js"></script>
+  <script src="js/tetris.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
