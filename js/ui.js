@@ -1,10 +1,7 @@
 /**
- * ui.js — Magic Tetris UI Controller
+ * ui.js — Magic Tetris UI Controller (fixed)
  */
 
-// ─────────────────────────────────────────────────────────────────────────────
-// State
-// ─────────────────────────────────────────────────────────────────────────────
 const State = {
   nickname:  '',
   avatarUrl: '',
@@ -29,7 +26,7 @@ function initParticles() {
   const colors = ['#8b5cf6','#ffd700','#00f5ff','#ff49db','#39ff14','#ff8c00'];
   const count  = window.innerWidth < 600 ? 20 : 45;
   for (let i = 0; i < count; i++) {
-    const p = document.createElement('div');
+    const p  = document.createElement('div');
     p.className = 'particle';
     const sz = Math.random() * 3.5 + 1;
     const cl = colors[Math.floor(Math.random() * colors.length)];
@@ -117,23 +114,24 @@ function _initGame(resume = false) {
   if (State.game) State.game.stop();
 
   State.game = new TetrisGame(canvas, {
-    onScoreUpdate: stats  => { _updateStats(stats); State.game._saveState(); },
-    onGameOver:    stats  => _onGameOver(stats),
-    onLineClear:   (n, p) => _onLineClear(n, p),
+    onScoreUpdate: stats      => _updateStats(stats),
+    onGameOver:    stats      => _onGameOver(stats),
+    onLineClear:   (n, p)    => _onLineClear(n, p),
     onSpeedChange: (tier, pct) => _updateSpeedBar(tier, pct),
-    onNextChange:  type   => State.game.drawMini($('next-canvas'), type),
-    onHoldChange:  type   => State.game.drawMini($('hold-canvas'), type || null),
+    onNextChange:  type       => State.game.drawMini($('next-canvas'), type),
+    onHoldChange:  type       => State.game.drawMini($('hold-canvas'), type || null),
   });
 
   if (resume && State.game.restoreFromStorage()) {
-    // Restored — show paused state
     _updateStats(State.game.stats());
     State.game.drawMini($('next-canvas'), State.game.next);
     State.game.drawMini($('hold-canvas'), State.game.holdType || null);
     State.game._draw();
     _updateSpeedBar(State.game.speedTier, State.game.speedPct);
     State.game.isRunning = true;
-    State.game.togglePause(); // start running from restored state
+    State.game.isPaused  = false;
+    State.game._lastDrop = performance.now();
+    State.game._raf = requestAnimationFrame(t => State.game._loop(t));
     $('pause-overlay').classList.add('hidden');
   } else {
     State.game.drawMini($('next-canvas'), State.game.next);
@@ -226,7 +224,7 @@ function _onGameOver(stats) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Keyboard  — uses DAS from TetrisGame
+// Keyboard
 // ─────────────────────────────────────────────────────────────────────────────
 function initKeyboard() {
   const held = new Set();
@@ -235,7 +233,7 @@ function initKeyboard() {
     if (!$('game-screen').classList.contains('active')) return;
     const g = State.game;
     if (!g || !g.isRunning) return;
-    if (held.has(e.code)) return;  // prevent OS key-repeat
+    if (held.has(e.code)) return;
     held.add(e.code);
 
     switch (e.code) {
@@ -243,7 +241,7 @@ function initKeyboard() {
       case 'ArrowRight': e.preventDefault(); g.startDAS('right'); break;
       case 'ArrowDown':  e.preventDefault(); g.startDAS('down');  break;
       case 'ArrowUp':    e.preventDefault(); g.rotate();          break;
-      case 'KeyZ':       e.preventDefault(); g.rotate(-1);        break;  // CCW
+      case 'KeyZ':       e.preventDefault(); g.rotate(-1);        break;
       case 'Space':      e.preventDefault(); g.hardDrop();        break;
       case 'KeyC': case 'ShiftLeft': case 'ShiftRight':
         e.preventDefault(); g.hold(); break;
@@ -254,7 +252,7 @@ function initKeyboard() {
       }
       case 'KeyR': {
         e.preventDefault();
-        if (confirm('Restart? Current progress will be lost.')) { g.restart(); _initGame(); }
+        if (confirm('Restart? Current progress will be lost.')) { g.stop(); _initGame(); }
         break;
       }
     }
@@ -271,7 +269,6 @@ function initKeyboard() {
     }
   });
 
-  // Stop DAS if window loses focus
   window.addEventListener('blur', () => {
     held.clear();
     State.game?._clearDAS();
@@ -365,7 +362,7 @@ function initGameScreenButtons() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Game over screen buttons
+// Game over screen
 // ─────────────────────────────────────────────────────────────────────────────
 function initGameoverScreen() {
   $('btn-download')?.addEventListener('click', () => {
@@ -387,7 +384,7 @@ function initGameoverScreen() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Score Card (canvas)
+// Score Card
 // ─────────────────────────────────────────────────────────────────────────────
 function _drawScoreCard(entry, position) {
   const canvas = $('score-card-canvas');
@@ -397,12 +394,10 @@ function _drawScoreCard(entry, position) {
 
   ctx.clearRect(0, 0, W, H);
 
-  // BG gradient
   const bg = ctx.createLinearGradient(0, 0, W, H);
   bg.addColorStop(0, '#0e0a1f'); bg.addColorStop(.5, '#120d28'); bg.addColorStop(1, '#0a0618');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-  // Stars
   for (let i = 0; i < 80; i++) {
     const sx = ((entry.score * (i+7) * 13) % W + W) % W;
     const sy = ((entry.score * (i+3) * 17) % H + H) % H;
@@ -411,14 +406,12 @@ function _drawScoreCard(entry, position) {
   }
   ctx.globalAlpha = 1;
 
-  // Glow border
   ctx.save();
   ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3;
   ctx.shadowBlur = 20; ctx.shadowColor = '#8b5cf6';
   _roundRect(ctx, 8, 8, W-16, H-16, 16); ctx.stroke();
   ctx.restore();
 
-  // Title
   ctx.textAlign = 'center';
   ctx.font = 'bold 26px Fredoka One, cursive';
   ctx.fillStyle = '#ffd700'; ctx.shadowBlur = 15; ctx.shadowColor = '#ffd700';
@@ -428,13 +421,11 @@ function _drawScoreCard(entry, position) {
   ctx.strokeStyle = 'rgba(139,92,246,0.35)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(30,78); ctx.lineTo(W-30,78); ctx.stroke();
 
-  // Avatar ring
   const aSize = 88, aY = 95;
   ctx.save();
   ctx.beginPath(); ctx.arc(W/2, aY+aSize/2, aSize/2+4, 0, Math.PI*2);
   ctx.fillStyle = '#8b5cf6'; ctx.shadowBlur = 20; ctx.shadowColor = '#8b5cf6'; ctx.fill(); ctx.restore();
 
-  // Clip avatar
   ctx.save();
   ctx.beginPath(); ctx.arc(W/2, aY+aSize/2, aSize/2, 0, Math.PI*2); ctx.clip();
   if (entry.avatarDataUrl) {

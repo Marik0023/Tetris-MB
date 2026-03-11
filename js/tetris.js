@@ -1,14 +1,14 @@
 /**
- * tetris.js — Magic Tetris Core Engine
+ * tetris.js — Magic Tetris Core Engine  (fixed)
  *
- * Logic inspired by chvin/react-tetris:
- *  - Pure matrix state (board = 2D array of cells)
- *  - Scoring: 1=100, 2=300, 3=700, 4=1500 × level
- *  - Speed: 6 levels, advances every 20 lines
- *  - Proper DAS (Delayed Auto Shift) with separate H/V repeat rates
- *  - Wall kicks on rotation
- *  - visibilitychange auto-pause
- *  - Full game state save/restore via localStorage
+ * Fixes applied vs original:
+ *  ✅ Game loop never stops — RAF rescheduled unconditionally at end of _loop()
+ *  ✅ _lock() no longer calls return in _loop() without RAF reschedule
+ *  ✅ Removed _isLocking flag (JS is single-threaded; flag caused "frozen piece" bug)
+ *  ✅ softDrop / hardDrop no longer gated by _isLocking
+ *  ✅ _lastDrop reset inside _lock() so new piece starts falling immediately
+ *  ✅ DAS timers cleared on game-over / pause to prevent ghost inputs
+ *  ✅ Ghost-y calculation guarded against null current
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,52 +17,45 @@
 const COLS = 10;
 const ROWS = 20;
 
-// Scoring per lines cleared × level  (chvin: 100, 300, 700, 1500)
-const LINE_SCORES = [0, 100, 300, 700, 1500];
-
-// Drop interval per speed level (ms)  — 6 levels, speed level = floor(lines/20)
+const LINE_SCORES    = [0, 100, 300, 700, 1500];
 const SPEED_INTERVALS = [800, 650, 500, 370, 250, 150];
 
-// Speed level label + colour for the speed bar
 const SPEED_TIERS = [
-  { label: 'Beginner',   color: '#34d399' },
-  { label: 'Moving',     color: '#60a5fa' },
-  { label: 'Fast',       color: '#a78bfa' },
-  { label: 'Very Fast',  color: '#f472b6' },
-  { label: 'Blazing',    color: '#fb923c' },
-  { label: 'ARCHMAGE',   color: '#ff073a' },
+  { label: 'Beginner',  color: '#34d399' },
+  { label: 'Moving',    color: '#60a5fa' },
+  { label: 'Fast',      color: '#a78bfa' },
+  { label: 'Very Fast', color: '#f472b6' },
+  { label: 'Blazing',   color: '#fb923c' },
+  { label: 'ARCHMAGE',  color: '#ff073a' },
 ];
 
-// Rank tiers  (score-based)
 const RANK_TIERS = [
-  { min: 0,      label: '🔮 Novice',      color: '#a78bfa' },
-  { min: 1000,   label: '⚡ Apprentice',  color: '#60a5fa' },
-  { min: 5000,   label: '🌟 Adept',       color: '#34d399' },
-  { min: 15000,  label: '💫 Master',      color: '#fbbf24' },
-  { min: 30000,  label: '🌙 Grandmaster', color: '#f97316' },
-  { min: 50000,  label: '✨ Archmage',    color: '#ff073a' },
+  { min: 0,     label: '🔮 Novice',      color: '#a78bfa' },
+  { min: 1000,  label: '⚡ Apprentice',  color: '#60a5fa' },
+  { min: 5000,  label: '🌟 Adept',       color: '#34d399' },
+  { min: 15000, label: '💫 Master',      color: '#fbbf24' },
+  { min: 30000, label: '🌙 Grandmaster', color: '#f97316' },
+  { min: 50000, label: '✨ Archmage',    color: '#ff073a' },
 ];
 
-// Piece definitions  — SRS standard shapes
 const PIECES = {
-  I: { shapes: [[[1,1,1,1]],              [[1],[1],[1],[1]]],                                                color:'#00f5ff' },
-  O: { shapes: [[[1,1],[1,1]]],                                                                               color:'#ffd700' },
-  T: { shapes: [[[0,1,0],[1,1,1]],        [[1,0],[1,1],[1,0]],  [[1,1,1],[0,1,0]], [[0,1],[1,1],[0,1]]],    color:'#bf5fff' },
-  S: { shapes: [[[0,1,1],[1,1,0]],        [[1,0],[1,1],[0,1]]],                                              color:'#39ff14' },
-  Z: { shapes: [[[1,1,0],[0,1,1]],        [[0,1],[1,1],[1,0]]],                                              color:'#ff073a' },
-  J: { shapes: [[[1,0,0],[1,1,1]],        [[1,1],[1,0],[1,0]],  [[1,1,1],[0,0,1]], [[0,1],[0,1],[1,1]]],    color:'#4169ff' },
-  L: { shapes: [[[0,0,1],[1,1,1]],        [[1,0],[1,0],[1,1]],  [[1,1,1],[1,0,0]], [[1,1],[0,1],[0,1]]],    color:'#ff8c00' },
+  I: { shapes: [[[1,1,1,1]],             [[1],[1],[1],[1]]],                                              color: '#00f5ff' },
+  O: { shapes: [[[1,1],[1,1]]],                                                                            color: '#ffd700' },
+  T: { shapes: [[[0,1,0],[1,1,1]], [[1,0],[1,1],[1,0]], [[1,1,1],[0,1,0]], [[0,1],[1,1],[0,1]]],           color: '#bf5fff' },
+  S: { shapes: [[[0,1,1],[1,1,0]], [[1,0],[1,1],[0,1]]],                                                   color: '#39ff14' },
+  Z: { shapes: [[[1,1,0],[0,1,1]], [[0,1],[1,1],[1,0]]],                                                   color: '#ff073a' },
+  J: { shapes: [[[1,0,0],[1,1,1]], [[1,1],[1,0],[1,0]], [[1,1,1],[0,0,1]], [[0,1],[0,1],[1,1]]],           color: '#4169ff' },
+  L: { shapes: [[[0,0,1],[1,1,1]], [[1,0],[1,0],[1,1]], [[1,1,1],[1,0,0]], [[1,1],[0,1],[0,1]]],           color: '#ff8c00' },
 };
 const PIECE_TYPES = Object.keys(PIECES);
 
-// Wall-kick offsets for JLSTZ  (SRS)
+// SRS wall-kick tables
 const KICKS_JLSTZ = [
-  [[ 0,0],[-1,0],[-1,+1],[0,-2],[-1,-2]],  // 0->1
-  [[ 0,0],[+1,0],[+1,-1],[0,+2],[+1,+2]],  // 1->2
-  [[ 0,0],[+1,0],[+1,+1],[0,-2],[+1,-2]],  // 2->3
-  [[ 0,0],[-1,0],[-1,-1],[0,+2],[-1,+2]],  // 3->0
+  [[ 0,0],[-1,0],[-1,+1],[0,-2],[-1,-2]],
+  [[ 0,0],[+1,0],[+1,-1],[0,+2],[+1,+2]],
+  [[ 0,0],[+1,0],[+1,+1],[0,-2],[+1,-2]],
+  [[ 0,0],[-1,0],[-1,-1],[0,+2],[-1,+2]],
 ];
-// I-piece kicks
 const KICKS_I = [
   [[ 0,0],[-2,0],[+1,0],[-2,-1],[+1,+2]],
   [[ 0,0],[-1,0],[+2,0],[-1,+2],[+2,-1]],
@@ -75,33 +68,20 @@ const SAVE_KEY = 'magic_tetris_gamestate';
 // ─────────────────────────────────────────────────────────────────────────────
 // UTILITY
 // ─────────────────────────────────────────────────────────────────────────────
-function emptyBoard() {
-  return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-}
-
-function cloneBoard(board) {
-  return board.map(row => [...row]);
-}
-
-function getSpeedLevel(lines) {
-  return Math.min(Math.floor(lines / 20), SPEED_INTERVALS.length - 1);
-}
-
-function getRank(score) {
-  return [...RANK_TIERS].reverse().find(r => score >= r.min) || RANK_TIERS[0];
-}
+function emptyBoard()        { return Array.from({ length: ROWS }, () => Array(COLS).fill(null)); }
+function cloneBoard(board)   { return board.map(r => [...r]); }
+function getSpeedLevel(lines){ return Math.min(Math.floor(lines / 20), SPEED_INTERVALS.length - 1); }
+function getRank(score)      { return [...RANK_TIERS].reverse().find(r => score >= r.min) || RANK_TIERS[0]; }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 7-BAG RANDOMISER
 // ─────────────────────────────────────────────────────────────────────────────
 class Bag {
   constructor() { this._bag = []; }
-
   next() {
-    if (this._bag.length === 0) this._refill();
+    if (!this._bag.length) this._refill();
     return this._bag.shift();
   }
-
   _refill() {
     const pool = [...PIECE_TYPES];
     for (let i = pool.length - 1; i > 0; i--) {
@@ -110,7 +90,6 @@ class Bag {
     }
     this._bag = pool;
   }
-
   serialize()   { return [...this._bag]; }
   restore(data) { this._bag = data || []; }
 }
@@ -127,28 +106,22 @@ class Piece {
     this.x     = Math.floor((COLS - this.shape[0].length) / 2);
     this.y     = 0;
   }
-
-  get kicks() {
-    return this.type === 'I' ? KICKS_I : KICKS_JLSTZ;
-  }
+  get kicks() { return this.type === 'I' ? KICKS_I : KICKS_JLSTZ; }
 
   rotatedShape(dir = 1) {
     const shapes = PIECES[this.type].shapes;
     const next   = ((this.rot + dir) % shapes.length + shapes.length) % shapes.length;
     return { shape: shapes[next], rot: next };
   }
-
-  serialize() {
-    return { type: this.type, rot: this.rot, x: this.x, y: this.y };
-  }
+  serialize() { return { type: this.type, rot: this.rot, x: this.x, y: this.y }; }
 
   static restore(data) {
     if (!data) return null;
-    const p  = new Piece(data.type);
-    p.rot    = data.rot;
-    p.shape  = PIECES[data.type].shapes[data.rot];
-    p.x      = data.x;
-    p.y      = data.y;
+    const p = new Piece(data.type);
+    p.rot   = data.rot;
+    p.shape = PIECES[data.type].shapes[data.rot];
+    p.x     = data.x;
+    p.y     = data.y;
     return p;
   }
 }
@@ -157,9 +130,8 @@ class Piece {
 // GAME ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
 class TetrisGame {
-  // expose constants for UI
-  static SPEED_TIERS   = SPEED_TIERS;
-  static RANK_TIERS    = RANK_TIERS;
+  static SPEED_TIERS    = SPEED_TIERS;
+  static RANK_TIERS     = RANK_TIERS;
   static SPEED_INTERVALS = SPEED_INTERVALS;
   static COLS = COLS;
   static ROWS = ROWS;
@@ -178,37 +150,31 @@ class TetrisGame {
     this._bag       = new Bag();
     this._raf       = null;
     this._lastDrop  = 0;
-    this._isLocking = false;
-
-    // DAS state
-    this._das = { left: null, right: null, down: null };
+    this._das       = { left: null, right: null, down: null };
 
     this._initState();
     this._bindVisibility();
   }
 
   // ── Public state ──────────────────────────────────────────────────────────
-  get speedLevel() { return getSpeedLevel(this.lines); }
-  get speedTier()  { return SPEED_TIERS[this.speedLevel]; }
-  get speedPct()   { return (this.speedLevel / (SPEED_INTERVALS.length - 1)) * 100; }
-  get rank()       { return getRank(this.score); }
+  get speedLevel()   { return getSpeedLevel(this.lines); }
+  get speedTier()    { return SPEED_TIERS[this.speedLevel]; }
+  get speedPct()     { return (this.speedLevel / (SPEED_INTERVALS.length - 1)) * 100; }
+  get rank()         { return getRank(this.score); }
   get dropInterval() { return SPEED_INTERVALS[this.speedLevel]; }
-
-  stats() {
-    return { score: this.score, lines: this.lines, level: this.level };
-  }
+  stats()            { return { score: this.score, lines: this.lines, level: this.level }; }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   start() {
     this.isRunning = true;
     this.isPaused  = false;
     this._lastDrop = performance.now();
-    this._isLocking = false;
-    this._loop(performance.now());
+    this._raf      = requestAnimationFrame(t => this._loop(t));
   }
 
   stop() {
     this.isRunning = false;
+    this.isPaused  = false;
     if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; }
     this._clearDAS();
   }
@@ -218,9 +184,10 @@ class TetrisGame {
     this.isPaused = !this.isPaused;
     if (!this.isPaused) {
       this._lastDrop = performance.now();
-      this._loop(performance.now());
+      this._raf = requestAnimationFrame(t => this._loop(t));
     } else {
       if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; }
+      this._clearDAS();
     }
     return this.isPaused;
   }
@@ -233,23 +200,22 @@ class TetrisGame {
   }
 
   // ── Moves ─────────────────────────────────────────────────────────────────
-  moveLeft()  { this._tryMove(-1, 0); }
-  moveRight() { this._tryMove(+1, 0); }
+  moveLeft()  { if (this.isRunning && !this.isPaused) this._tryMove(-1, 0); }
+  moveRight() { if (this.isRunning && !this.isPaused) this._tryMove(+1, 0); }
 
   softDrop() {
-    if (this._isLocking) return;
+    if (!this.isRunning || this.isPaused) return;
     if (!this._tryMove(0, +1)) {
-      // hit bottom → lock
       this._lock();
     } else {
       this.score += 1;
-      this._lastDrop = performance.now();  // reset auto-drop
+      this._lastDrop = performance.now();
       this.onScoreUpdate(this.stats());
     }
   }
 
   hardDrop() {
-    if (this._isLocking) return;
+    if (!this.isRunning || this.isPaused) return;
     let dropped = 0;
     while (this._tryMove(0, +1)) dropped++;
     this.score += dropped * 2;
@@ -258,9 +224,9 @@ class TetrisGame {
   }
 
   rotate(dir = 1) {
+    if (!this.isRunning || this.isPaused || !this.current) return false;
     const { shape: newShape, rot: newRot } = this.current.rotatedShape(dir);
     const kicks = this.current.kicks[this.current.rot];
-
     for (const [dx, dy] of kicks) {
       if (this._isValid(newShape, this.current.x + dx, this.current.y - dy)) {
         this.current.shape = newShape;
@@ -276,35 +242,37 @@ class TetrisGame {
   }
 
   hold() {
-    if (!this.canHold) return;
+    if (!this.isRunning || this.isPaused || !this.canHold) return;
     const type = this.current.type;
     if (!this.holdType) {
-      this.holdType  = type;
-      this.current   = new Piece(this._bag.next());
+      this.holdType = type;
+      this.current  = new Piece(this._bag.next());
       this.onNextChange(this.next);
     } else {
       const prev    = this.holdType;
       this.holdType = type;
       this.current  = new Piece(prev);
     }
-    this.canHold = false;
+    this.current.x = Math.floor((COLS - this.current.shape[0].length) / 2);
+    this.current.y = 0;
+    this.canHold   = false;
+    this._lastDrop = performance.now();
     this.onHoldChange(this.holdType);
     this._draw();
     this._saveState();
   }
 
-  // ── DAS (Delayed Auto Shift) ──────────────────────────────────────────────
-  // Called by keyboard handler — separate H and V timing like chvin
+  // ── DAS ───────────────────────────────────────────────────────────────────
   startDAS(dir) {
     this._clearDAS(dir);
     const fn = dir === 'left'  ? () => this.moveLeft()
              : dir === 'right' ? () => this.moveRight()
              :                   () => this.softDrop();
 
-    const initialDelay = dir === 'down' ? 80 : 150;  // ms before repeat starts
-    const repeatRate   = dir === 'down' ? 50 : 40;   // ms between repeats
+    const initialDelay = dir === 'down' ? 80  : 150;
+    const repeatRate   = dir === 'down' ? 50  : 40;
 
-    fn(); // immediate first move
+    fn();
     this._das[dir] = setTimeout(() => {
       this._das[dir] = setInterval(fn, repeatRate);
     }, initialDelay);
@@ -313,47 +281,15 @@ class TetrisGame {
   stopDAS(dir) { this._clearDAS(dir); }
 
   _clearDAS(dir) {
-    if (dir) {
-      clearTimeout(this._das[dir]);
-      clearInterval(this._das[dir]);
-      this._das[dir] = null;
-    } else {
-      ['left','right','down'].forEach(d => {
-        clearTimeout(this._das[d]);
-        clearInterval(this._das[d]);
-        this._das[d] = null;
-      });
-    }
+    const dirs = dir ? [dir] : ['left', 'right', 'down'];
+    dirs.forEach(d => {
+      clearTimeout(this._das[d]);
+      clearInterval(this._das[d]);
+      this._das[d] = null;
+    });
   }
 
-  // ── State save / restore ──────────────────────────────────────────────────
-  saveToStorage()  { this._saveState(); }
-
-  restoreFromStorage() {
-    try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return false;
-      const s = JSON.parse(raw);
-      if (!s || !s.board) return false;
-
-      this.board     = s.board;
-      this.score     = s.score  || 0;
-      this.lines     = s.lines  || 0;
-      this.level     = s.level  || 1;
-      this.canHold   = s.canHold !== false;
-      this.holdType  = s.holdType || null;
-      this._bag.restore(s.bag || []);
-      this.current   = Piece.restore(s.current) || new Piece(this._bag.next());
-      this.next      = s.nextType || this._bag.next();
-      this.isRunning = false;
-      this.isPaused  = true;  // paused until player unpauses or starts
-      return true;
-    } catch { return false; }
-  }
-
-  clearStorage() { localStorage.removeItem(SAVE_KEY); }
-
-  // ── Rendering ─────────────────────────────────────────────────────────────
+  // ── Mini canvas renderer ──────────────────────────────────────────────────
   drawMini(canvas, type) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -376,7 +312,33 @@ class TetrisGame {
         if (shape[r][c]) this._drawBlock(ctx, ox + c * bs, oy + r * bs, bs, color);
   }
 
-  // ── Private ───────────────────────────────────────────────────────────────
+  // ── State persistence ─────────────────────────────────────────────────────
+  saveToStorage()     { this._saveState(); }
+  clearStorage()      { localStorage.removeItem(SAVE_KEY); }
+
+  restoreFromStorage() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      if (!s || !s.board) return false;
+
+      this.board    = s.board;
+      this.score    = s.score    || 0;
+      this.lines    = s.lines    || 0;
+      this.level    = s.level    || 1;
+      this.canHold  = s.canHold !== false;
+      this.holdType = s.holdType || null;
+      this._bag.restore(s.bag || []);
+      this.current  = Piece.restore(s.current) || new Piece(this._bag.next());
+      this.next     = s.nextType || this._bag.next();
+      this.isRunning = false;
+      this.isPaused  = true;
+      return true;
+    } catch { return false; }
+  }
+
+  // ── Private: State init ───────────────────────────────────────────────────
   _initState() {
     this.board     = emptyBoard();
     this.score     = 0;
@@ -389,9 +351,9 @@ class TetrisGame {
     this._bag      = new Bag();
     this.current   = new Piece(this._bag.next());
     this.next      = this._bag.next();
-    this._isLocking = false;
   }
 
+  // ── Private: Validation ───────────────────────────────────────────────────
   _isValid(shape, px, py) {
     for (let r = 0; r < shape.length; r++)
       for (let c = 0; c < shape[r].length; c++) {
@@ -404,73 +366,67 @@ class TetrisGame {
   }
 
   _tryMove(dx, dy) {
+    if (!this.current) return false;
     if (this._isValid(this.current.shape, this.current.x + dx, this.current.y + dy)) {
       this.current.x += dx;
       this.current.y += dy;
-      this._draw();
       return true;
     }
     return false;
   }
 
   _ghostY() {
+    if (!this.current) return 0;
     let gy = this.current.y;
     while (this._isValid(this.current.shape, this.current.x, gy + 1)) gy++;
     return gy;
   }
 
+  // ── Private: Lock piece ───────────────────────────────────────────────────
+  // FIX: Does NOT call stop() or touch the RAF — the loop handles itself.
   _lock() {
-    if (this._isLocking) return;
-    this._isLocking = true;
-
+    if (!this.current) return;
     const { shape, x, y, color } = this.current;
 
-    // Check game over — piece locks above visible field
-    let allAbove = true;
+    // Check if entire piece is above the visible field → game over
+    const anyVisible = shape.some((row, r) => row.some((cell, c) => cell && (y + r) >= 0));
+    if (!anyVisible) { this._triggerGameOver(); return; }
+
+    // Write to board
     for (let r = 0; r < shape.length; r++)
       for (let c = 0; c < shape[r].length; c++)
-        if (shape[r][c] && y + r >= 0) { allAbove = false; break; }
-
-    if (allAbove) { this._triggerGameOver(); return; }
-
-    // Write piece to board
-    for (let r = 0; r < shape.length; r++)
-      for (let c = 0; c < shape[r].length; c++)
-        if (shape[r][c] && y + r >= 0)
+        if (shape[r][c] && (y + r) >= 0)
           this.board[y + r][x + c] = { color };
 
-    // Clear full lines
+    // Clear lines
     const cleared = this._clearLines();
 
-    // Update score / lines / level
+    // Stats
+    const prevSpeed = this.speedLevel;
     if (cleared > 0) {
-      const pts = LINE_SCORES[cleared] * this.level;
-      const prevSpeed = this.speedLevel;
+      const pts   = LINE_SCORES[cleared] * this.level;
       this.score += pts;
       this.lines += cleared;
       this.level  = Math.floor(this.lines / 10) + 1;
       this.onLineClear(cleared, pts);
-      this.onScoreUpdate(this.stats());
       if (this.speedLevel !== prevSpeed) this.onSpeedChange(this.speedTier, this.speedPct);
-    } else {
-      this.onScoreUpdate(this.stats());
     }
+    this.onScoreUpdate(this.stats());
 
-    // Next piece
+    // Spawn next
     this.canHold  = true;
     this.current  = new Piece(this.next);
     this.next     = this._bag.next();
     this.onNextChange(this.next);
 
-    // Check spawn collision → game over
+    // Spawn collision → game over
     if (!this._isValid(this.current.shape, this.current.x, this.current.y)) {
       this._triggerGameOver();
       return;
     }
 
-    this._isLocking = false;
-    this._lastDrop  = performance.now();
-    this._draw();
+    // Reset drop timer for new piece
+    this._lastDrop = performance.now();
     this._saveState();
   }
 
@@ -487,22 +443,29 @@ class TetrisGame {
   }
 
   _triggerGameOver() {
-    this._isLocking = false;
-    this.stop();
+    this.stop();           // stops RAF + DAS; isRunning = false
     this.clearStorage();
     this.onGameOver(this.stats());
   }
 
+  // ── Private: Game loop ────────────────────────────────────────────────────
+  // FIX: RAF is ALWAYS rescheduled at the bottom — it never stops mid-game.
   _loop(ts) {
-    if (!this.isRunning || this.isPaused) return;
+    if (!this.isRunning || this.isPaused) return;  // only exit is game-over/pause
+
     if (ts - this._lastDrop >= this.dropInterval) {
       if (!this._tryMove(0, +1)) {
+        // Piece can't fall → lock it
         this._lock();
-        return;
+        // _triggerGameOver() inside _lock() sets isRunning=false → we return above next iteration
+        if (!this.isRunning) return;   // game over — don't reschedule
+      } else {
+        this._lastDrop = ts;
       }
-      this._lastDrop = ts;
     }
+
     this._draw();
+    // ✅ KEY FIX: RAF is always rescheduled here, not inside _lock()
     this._raf = requestAnimationFrame(t => this._loop(t));
   }
 
@@ -510,15 +473,15 @@ class TetrisGame {
     if (!this.isRunning && !this.isPaused) return;
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        board:     this.board,
-        score:     this.score,
-        lines:     this.lines,
-        level:     this.level,
-        canHold:   this.canHold,
-        holdType:  this.holdType,
-        bag:       this._bag.serialize(),
-        current:   this.current.serialize(),
-        nextType:  this.next,
+        board:    this.board,
+        score:    this.score,
+        lines:    this.lines,
+        level:    this.level,
+        canHold:  this.canHold,
+        holdType: this.holdType,
+        bag:      this._bag.serialize(),
+        current:  this.current.serialize(),
+        nextType: this.next,
       }));
     } catch {}
   }
@@ -528,14 +491,14 @@ class TetrisGame {
       if (document.hidden && this.isRunning && !this.isPaused) {
         this.togglePause();
         this._visibilityPaused = true;
-      } else if (!document.hidden && this._visibilityPaused && this.isPaused) {
+      } else if (!document.hidden && this._visibilityPaused) {
         this._visibilityPaused = false;
-        // stays paused — user must resume manually
+        // stays paused — user resumes manually
       }
     });
   }
 
-  // ── Draw ──────────────────────────────────────────────────────────────────
+  // ── Rendering ─────────────────────────────────────────────────────────────
   _draw() {
     const ctx = this.ctx;
     const W   = this.canvas.width;
@@ -548,8 +511,14 @@ class TetrisGame {
     ctx.fillStyle = '#060413';
     ctx.fillRect(0, 0, W, H);
 
+    // Subtle scanline effect
+    for (let r = 0; r < ROWS; r += 2) {
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0, r * BS, W, BS);
+    }
+
     // Grid lines
-    ctx.strokeStyle = 'rgba(100,60,180,0.1)';
+    ctx.strokeStyle = 'rgba(100,60,180,0.10)';
     ctx.lineWidth   = 0.5;
     for (let r = 0; r <= ROWS; r++) {
       ctx.beginPath(); ctx.moveTo(0, r * BS); ctx.lineTo(W, r * BS); ctx.stroke();
@@ -568,45 +537,53 @@ class TetrisGame {
 
     // Ghost piece
     const gy = this._ghostY();
-    ctx.globalAlpha = 0.2;
-    for (let r = 0; r < this.current.shape.length; r++)
-      for (let c = 0; c < this.current.shape[r].length; c++)
-        if (this.current.shape[r][c])
-          this._drawBlock(ctx, (this.current.x+c)*BS, (gy+r)*BS, BS, this.current.color);
-    ctx.globalAlpha = 1;
+    if (gy !== this.current.y) {
+      ctx.globalAlpha = 0.18;
+      for (let r = 0; r < this.current.shape.length; r++)
+        for (let c = 0; c < this.current.shape[r].length; c++)
+          if (this.current.shape[r][c])
+            this._drawBlock(ctx, (this.current.x + c) * BS, (gy + r) * BS, BS, this.current.color);
+      ctx.globalAlpha = 1;
+    }
 
     // Active piece
     for (let r = 0; r < this.current.shape.length; r++)
       for (let c = 0; c < this.current.shape[r].length; c++)
         if (this.current.shape[r][c])
-          this._drawBlock(ctx, (this.current.x+c)*BS, (this.current.y+r)*BS, BS, this.current.color);
+          this._drawBlock(ctx, (this.current.x + c) * BS, (this.current.y + r) * BS, BS, this.current.color);
   }
 
   _drawBlock(ctx, px, py, bs, color) {
-    const pad = 1.2;
+    const pad = 1.5;
     ctx.save();
-    ctx.shadowBlur  = 14;
+    ctx.shadowBlur  = 16;
     ctx.shadowColor = color;
 
+    // Main fill
     ctx.fillStyle = color;
-    ctx.fillRect(px + pad, py + pad, bs - pad*2, bs - pad*2);
+    ctx.fillRect(px + pad, py + pad, bs - pad * 2, bs - pad * 2);
 
-    // Gradient shine
+    // Gradient overlay
     const g = ctx.createLinearGradient(px, py, px + bs, py + bs);
-    g.addColorStop(0, 'rgba(255,255,255,0.30)');
-    g.addColorStop(1, 'rgba(0,0,0,0.28)');
+    g.addColorStop(0, 'rgba(255,255,255,0.28)');
+    g.addColorStop(1, 'rgba(0,0,0,0.30)');
     ctx.fillStyle = g;
-    ctx.fillRect(px + pad, py + pad, bs - pad*2, bs - pad*2);
+    ctx.fillRect(px + pad, py + pad, bs - pad * 2, bs - pad * 2);
 
-    // Top + left edge highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.22)';
-    ctx.fillRect(px + pad, py + pad, bs - pad*2, 3);
-    ctx.fillRect(px + pad, py + pad, 3, bs - pad*2);
+    // Top & left highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.24)';
+    ctx.fillRect(px + pad, py + pad, bs - pad * 2, 3);
+    ctx.fillRect(px + pad, py + pad, 3, bs - pad * 2);
 
-    // Thin border
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-    ctx.lineWidth   = 0.6;
-    ctx.strokeRect(px + pad + 0.5, py + pad + 0.5, bs - pad*2 - 1, bs - pad*2 - 1);
+    // Bottom-right shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.20)';
+    ctx.fillRect(px + pad, py + bs - pad - 3, bs - pad * 2, 3);
+    ctx.fillRect(px + bs - pad - 3, py + pad, 3, bs - pad * 2);
+
+    // Border
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth   = 0.7;
+    ctx.strokeRect(px + pad + 0.5, py + pad + 0.5, bs - pad * 2 - 1, bs - pad * 2 - 1);
 
     ctx.restore();
   }

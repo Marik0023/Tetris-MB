@@ -5,27 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Magic Tetris</title>
   <link rel="icon" href="assets/logo.webp" type="image/webp" />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Exo+2:wght@300;400;600;700;900&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Fredoka+One&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
   <div id="particles-container"></div>
 
-  <!-- SETUP SCREEN -->
+  <!-- ═══════════════════════════════════════════
+       SETUP SCREEN
+  ═══════════════════════════════════════════ -->
   <div id="setup-screen" class="screen active">
     <div class="setup-container">
+
       <div class="logo-wrap">
         <img src="assets/logo.webp" alt="Magic Tetris" class="logo-img" />
       </div>
+
       <div class="setup-card">
-        <h2 class="setup-title">Enter the Magic</h2>
+        <h2 class="setup-title">ENTER THE ARCANE</h2>
+
         <div class="form-group">
-          <label>Your Nickname</label>
-          <input type="text" id="nickname-input" placeholder="WizardPlayer42" maxlength="20" autocomplete="off" />
+          <label>Wizard Name</label>
+          <input type="text" id="nickname-input" placeholder="Enter your alias…" maxlength="20" autocomplete="off" />
         </div>
+
         <div class="form-group">
-          <label>Your Avatar</label>
+          <label>Avatar</label>
           <div class="avatar-upload-area" id="avatar-upload-area">
             <div class="avatar-preview-wrap">
               <img id="avatar-preview" src="" alt="" style="display:none" />
@@ -37,59 +43,76 @@
             <input type="file" id="avatar-input" accept="image/*" style="display:none" />
           </div>
         </div>
+
         <button class="btn-start" id="btn-start">
           <span class="btn-glow"></span>
-          ✨ Start Game
+          ✦ BEGIN GAME
         </button>
+
         <a href="leaderboard.html" class="btn-lb-link">🏆 View Leaderboard</a>
       </div>
+
     </div>
   </div>
 
-  <!-- GAME SCREEN -->
+  <!-- ═══════════════════════════════════════════
+       GAME SCREEN
+  ═══════════════════════════════════════════ -->
   <div id="game-screen" class="screen">
     <div class="game-layout">
 
+      <!-- Left Panel -->
       <div class="side-panel left-panel">
+
         <div class="panel-block">
-          <div class="panel-label">HOLD</div>
-          <canvas id="hold-canvas" width="120" height="100"></canvas>
+          <div class="panel-label">Hold</div>
+          <canvas id="hold-canvas" width="120" height="80"></canvas>
         </div>
+
         <div class="panel-block">
-          <div class="panel-label">SCORE</div>
+          <div class="panel-label">Score</div>
           <div class="stat-val" id="score-display">0</div>
         </div>
+
         <div class="panel-block">
-          <div class="panel-label">BEST</div>
+          <div class="panel-label">Best</div>
           <div class="stat-val best" id="best-display">0</div>
         </div>
+
         <div class="panel-block">
-          <div class="panel-label">LINES</div>
+          <div class="panel-label">Lines</div>
           <div class="stat-val" id="lines-display">0</div>
         </div>
+
         <div class="panel-block">
-          <div class="panel-label">LEVEL</div>
+          <div class="panel-label">Level</div>
           <div class="stat-val" id="level-display">1</div>
         </div>
+
         <div class="panel-block">
-          <div class="panel-label">RANK</div>
+          <div class="panel-label">Rank</div>
           <div class="rank-badge" id="rank-display">🔮 Novice</div>
         </div>
+
         <div class="panel-block player-info-mini">
           <img id="player-avatar-mini" src="" alt="" />
           <span id="player-nick-mini"></span>
         </div>
+
       </div>
 
+      <!-- Board -->
       <div class="board-wrap">
         <div class="board-glow-border">
           <canvas id="game-canvas" width="300" height="600"></canvas>
         </div>
+
         <div id="pause-overlay" class="pause-overlay hidden">
           <div class="pause-text">⏸ PAUSED</div>
-          <button class="btn-resume" id="btn-resume">▶ Resume</button>
-          <button class="btn-pause-restart" id="btn-pause-restart">🔄 Restart</button>
+          <button class="btn-resume" id="btn-resume">▶ RESUME</button>
+          <button class="btn-pause-restart" id="btn-pause-restart">↺ Restart</button>
         </div>
+
         <div class="speed-bar-wrap">
           <div class="speed-label-row">
             <span>Speed</span>
@@ -99,6 +122,8 @@
             <div class="speed-bar-fill" id="speed-bar-fill"></div>
           </div>
         </div>
+
+        <!-- Mobile controls -->
         <div class="mobile-controls" id="mobile-controls">
           <div class="ctrl-row">
             <button class="ctrl-btn" id="ctrl-hold">🔄 Hold</button>
@@ -116,42 +141,51 @@
         </div>
       </div>
 
+      <!-- Right Panel -->
       <div class="side-panel right-panel">
+
         <div class="panel-block">
-          <div class="panel-label">NEXT</div>
-          <canvas id="next-canvas" width="120" height="100"></canvas>
+          <div class="panel-label">Next</div>
+          <canvas id="next-canvas" width="120" height="80"></canvas>
         </div>
+
         <div class="panel-block">
-          <div class="panel-label">CONTROLS</div>
+          <div class="panel-label">Controls</div>
           <div class="controls-hint">
             <div>← → Move</div>
-            <div>↑ Rotate</div>
+            <div>↑ / Z Rotate</div>
             <div>↓ Soft Drop</div>
             <div>Space Hard Drop</div>
             <div>C / Shift Hold</div>
             <div>P / Esc Pause</div>
+            <div>R Restart</div>
           </div>
         </div>
-        <button class="btn-restart" id="btn-restart">🔄 Restart</button>
-        <button class="btn-quit" id="btn-quit">🚪 Quit</button>
+
+        <button class="btn-restart" id="btn-restart">↺ Restart</button>
+        <button class="btn-quit" id="btn-quit">✕ Quit</button>
+
       </div>
 
     </div>
+
     <div id="line-flash"  class="line-flash hidden"></div>
     <div id="score-popup" class="score-popup hidden"></div>
   </div>
 
-  <!-- GAME OVER SCREEN -->
+  <!-- ═══════════════════════════════════════════
+       GAME OVER SCREEN
+  ═══════════════════════════════════════════ -->
   <div id="gameover-screen" class="screen">
     <div class="gameover-container">
-      <h1 class="gameover-title">Game Over!</h1>
+      <h1 class="gameover-title">GAME OVER</h1>
       <div class="score-card-wrap">
         <canvas id="score-card-canvas" width="400" height="500"></canvas>
       </div>
       <div class="gameover-actions">
         <button class="btn-action btn-download" id="btn-download">💾 Save Card</button>
-        <button class="btn-action btn-again"    id="btn-again">🔄 Play Again</button>
-        <button class="btn-action btn-menu"     id="btn-menu">🏠 Menu</button>
+        <button class="btn-action btn-again"    id="btn-again">↺ Play Again</button>
+        <button class="btn-action btn-menu"     id="btn-menu">⌂ Menu</button>
         <a href="leaderboard.html" class="btn-action btn-lb">🏆 Leaderboard</a>
       </div>
     </div>
