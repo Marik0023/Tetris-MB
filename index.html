@@ -1,184 +1,172 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Magic Tetris</title>
-  <link rel="icon" href="assets/logo.webp" type="image/webp" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Magic Tetris</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles/main.css">
 </head>
 <body>
+<div id="aurora">
+  <div class="au au1"></div>
+  <div class="au au2"></div>
+  <div class="au au3"></div>
+</div>
+<div id="stars"></div>
+<div id="pts"></div>
 
-  <div id="particles-container"></div>
+<!-- PAGE 1 – START -->
+<div class="pg on" id="pg-start">
+  <div class="logo-anim"><img id="logo-s" src="" alt="Magic Tetris"></div>
+  <div class="start-card gcard">
+    <div class="gcard-inner">
+      <h2>✦ ENTER THE ARENA</h2>
+      <p class="sub">Choose your wizard identity</p>
 
-  <!-- ══════════════════════════════════════
-       SETUP SCREEN
-  ══════════════════════════════════════ -->
-  <div id="setup-screen" class="screen active">
-    <div class="setup-container">
-
-      <div class="logo-wrap">
-        <img src="assets/logo.webp" alt="Magic Tetris" class="logo-img" />
-      </div>
-
-      <div class="setup-card">
-        <h2 class="setup-title">ENTER THE ARCANE</h2>
-
-        <div class="form-group">
-          <label>Wizard Name</label>
-          <input id="nickname-input" type="text" placeholder="Enter your alias…" maxlength="20" autocomplete="off" />
-        </div>
-
-        <div class="form-group">
-          <label>Avatar</label>
-          <div class="avatar-upload-area" id="avatar-upload-area">
-            <div class="avatar-preview-wrap">
-              <img id="avatar-preview" src="" alt="" style="display:none" />
-              <div id="avatar-placeholder" class="avatar-placeholder">
-                <span class="upload-icon">🧙</span>
-                <span>Upload Photo</span>
-              </div>
-            </div>
-            <input id="avatar-input" type="file" accept="image/*" style="display:none" />
+      <div class="av-wrap">
+        <div class="av-ring" onclick="document.getElementById('av-in').click()">
+          <div class="av-btn" id="av-btn">
+            <span class="av-ico" id="av-ico">🧙</span>
+            <img class="av-img" id="av-img" alt="">
           </div>
         </div>
-
-        <button class="btn-start" id="btn-start">
-          <span class="btn-glow"></span>✦ BEGIN GAME
-        </button>
-
-        <a href="leaderboard.html" class="btn-lb-link">🏆 View Leaderboard</a>
+        <input type="file" id="av-in" accept="image/*" style="display:none">
+        <span class="av-hint">TAP TO UPLOAD AVATAR</span>
       </div>
 
+      <div class="fld">
+        <label>✦ Wizard Name</label>
+        <input id="nick" type="text" placeholder="Enter your name…" maxlength="18"
+               autocomplete="off" onkeydown="if(event.key==='Enter')onStart()">
+      </div>
+
+      <button class="btn-main" onclick="onStart()">⚡ START PLAYING</button>
+      <button class="btn-sec" onclick="openLB('pg-start')">🏆 Leaderboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2 – GAME -->
+<div class="pg" id="pg-game">
+  <div class="gh">
+    <div class="gh-logo"><img id="logo-g" src="" alt=""></div>
+    <div class="gh-right">
+      <img class="gh-av" id="gh-av" src="" alt="">
+      <span class="gh-nm" id="gh-nm"></span>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════
-       GAME SCREEN
-  ══════════════════════════════════════ -->
-  <div id="game-screen" class="screen">
-    <div class="game-layout">
-
-      <!-- Left panel -->
-      <div class="side-panel left-panel">
-        <div class="panel-block">
-          <div class="panel-label">Hold</div>
-          <canvas id="hold-canvas" width="114" height="80"></canvas>
-        </div>
-        <div class="panel-block">
-          <div class="panel-label">Score</div>
-          <div class="stat-val" id="score-display">0</div>
-        </div>
-        <div class="panel-block">
-          <div class="panel-label">Best</div>
-          <div class="stat-val best" id="best-display">0</div>
-        </div>
-        <div class="panel-block">
-          <div class="panel-label">Lines</div>
-          <div class="stat-val" id="lines-display">0</div>
-        </div>
-        <div class="panel-block">
-          <div class="panel-label">Level</div>
-          <div class="stat-val" id="level-display">1</div>
-        </div>
-        <div class="panel-block">
-          <div class="panel-label">Rank</div>
-          <div class="rank-badge" id="rank-display">🔮 Novice</div>
-        </div>
-        <div class="panel-block player-info-mini">
-          <img id="player-avatar-mini" src="" alt="" />
-          <span id="player-nick-mini"></span>
-        </div>
+  <div class="gbody">
+    <div class="bwrap" id="bwrap">
+      <div class="bwrap-in">
+        <canvas id="gc"></canvas>
       </div>
-
-      <!-- Board -->
-      <div class="board-wrap">
-        <div id="board-glow-border">
-          <canvas id="game-canvas" width="300" height="600"></canvas>
-        </div>
-
-        <div id="pause-overlay" class="pause-overlay hidden">
-          <div class="pause-text">⏸ PAUSED</div>
-          <button class="btn-resume" id="btn-resume">▶ RESUME</button>
-          <button class="btn-pause-restart" id="btn-pause-restart">↺ Restart</button>
-        </div>
-
-        <div class="speed-bar-wrap">
-          <div class="speed-label-row">
-            <span>Speed</span>
-            <span id="speed-label-text">Beginner</span>
-          </div>
-          <div class="speed-bar-track">
-            <div class="speed-bar-fill" id="speed-bar-fill"></div>
-          </div>
-        </div>
-
-        <div class="mobile-controls" id="mobile-controls">
-          <div class="ctrl-row">
-            <button class="ctrl-btn" id="ctrl-hold">🔄 Hold</button>
-            <button class="ctrl-btn" id="ctrl-rotate">↻ Rotate</button>
-            <button class="ctrl-btn" id="ctrl-pause">⏸</button>
-          </div>
-          <div class="ctrl-row">
-            <button class="ctrl-btn big" id="ctrl-left">◀</button>
-            <button class="ctrl-btn big" id="ctrl-down">▼</button>
-            <button class="ctrl-btn big" id="ctrl-right">▶</button>
-          </div>
-          <div class="ctrl-row">
-            <button class="ctrl-btn hard-drop" id="ctrl-hard">⬇ HARD DROP</button>
-          </div>
-        </div>
+      <img class="board-logo" id="logo-board" src="" alt="Magic Tetris logo">
+      <div class="pov" id="pov">
+        <h2>⏸ PAUSED</h2>
+        <p>Press P / Esc to resume</p>
       </div>
-
-      <!-- Right panel -->
-      <div class="side-panel right-panel">
-        <div class="panel-block">
-          <div class="panel-label">Next</div>
-          <canvas id="next-canvas" width="114" height="80"></canvas>
-        </div>
-        <div class="panel-block">
-          <div class="panel-label">Controls</div>
-          <div class="controls-hint">
-            <div>← → Move</div>
-            <div>↑ Rotate</div>
-            <div>↓ Soft drop</div>
-            <div>Space Hard drop</div>
-            <div>C / Shift Hold</div>
-            <div>P / Esc Pause</div>
-            <div>R Restart</div>
-          </div>
-        </div>
-        <button class="btn-restart" id="btn-restart">↺ Restart</button>
-        <button class="btn-quit"    id="btn-quit">✕ Quit</button>
-      </div>
-
     </div>
 
-    <div id="line-flash"  class="line-flash hidden"></div>
-    <div id="score-popup" class="score-popup hidden"></div>
-  </div>
-
-  <!-- ══════════════════════════════════════
-       GAME OVER SCREEN
-  ══════════════════════════════════════ -->
-  <div id="gameover-screen" class="screen">
-    <div class="gameover-container">
-      <h1 class="gameover-title">GAME OVER</h1>
-      <div class="score-card-wrap">
-        <canvas id="score-card-canvas" width="400" height="490"></canvas>
+    <div class="sp">
+      <div class="sc"><label>⚡ Score</label><div class="sv" id="h-sc">0</div></div>
+      <div class="sc"><label>🏆 Best</label><div class="sv gd" id="h-bs">0</div></div>
+      <div class="sc"><label>✨ Lines</label><div class="sv" id="h-ln">0</div></div>
+      <div class="sc">
+        <label>🌟 Level</label>
+        <div class="sv pk" id="h-lv">1</div>
+        <div class="lbar"><div class="lbar-f" id="lbar-f" style="width:0%"></div></div>
       </div>
-      <div class="gameover-actions">
-        <button class="btn-action btn-download" id="btn-download">💾 Save Card</button>
-        <button class="btn-action btn-again"    id="btn-again">↺ Play Again</button>
-        <button class="btn-action btn-menu"     id="btn-menu">⌂ Menu</button>
-        <a href="leaderboard.html" class="btn-action btn-lb">🏆 Leaderboard</a>
+      <div class="nc-card">
+        <label>👁 Next</label>
+        <canvas id="nc" width="84" height="66"></canvas>
+      </div>
+      <div class="kh">
+        <label>⌨ Keys</label>
+        <div class="kh-row"><kbd>← →</kbd>Move</div>
+        <div class="kh-row"><kbd>↑/X</kbd>Rotate ↻</div>
+        <div class="kh-row"><kbd>Z</kbd>Rotate ↺</div>
+        <div class="kh-row"><kbd>↓</kbd>Soft drop</div>
+        <div class="kh-row"><kbd>Space</kbd>Hard drop</div>
+        <div class="kh-row"><kbd>P/Esc</kbd>Pause</div>
+      </div>
+      <div class="sp-btns">
+        <button class="sb sb-p" id="btn-pause" onclick="togglePause()">⏸ Pause</button>
+        <button class="sb sb-r" onclick="askRestart()">↩ Restart</button>
+        <button class="sb sb-b" onclick="openLB('pg-game')">🏆 Leaderboard</button>
       </div>
     </div>
   </div>
 
-  <script src="js/leaderboard.js"></script>
-  <script src="js/tetris.js"></script>
-  <script src="js/ui.js"></script>
+  <div class="dpad">
+    <div class="dp-row">
+      <button class="mb" ontouchstart="tap(event,'rcw')" onclick="tap(null,'rcw')">↻</button>
+      <button class="mb" ontouchstart="tap(event,'rccw')" onclick="tap(null,'rccw')">↺</button>
+    </div>
+    <div class="dp-row">
+      <button class="mb" ontouchstart="begR(event,'L')" ontouchend="endR()" onmousedown="begR(null,'L')" onmouseup="endR()">←</button>
+      <button class="mb" ontouchstart="begR(event,'D')" ontouchend="endR()" onmousedown="begR(null,'D')" onmouseup="endR()">↓</button>
+      <button class="mb" ontouchstart="begR(event,'R')" ontouchend="endR()" onmousedown="begR(null,'R')" onmouseup="endR()">→</button>
+    </div>
+    <div class="dp-row">
+      <button class="mb wide drp" ontouchstart="tap(event,'hd')" onclick="tap(null,'hd')">⬇ HARD DROP</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3 – GAME OVER -->
+<div class="pg" id="pg-over">
+  <div class="oc gcard">
+    <div class="gcard-inner">
+      <img class="oc-logo" id="logo-o" src="" alt="Magic Tetris">
+      <h2>GAME OVER</h2>
+      <img class="oc-av" id="oc-av" src="" alt="">
+      <div class="oc-nm" id="oc-nm"></div>
+      <div class="oc-rnk" id="oc-rnk">🏆 RANK #1</div>
+      <div class="oc-stats">
+        <div class="oc-st"><label>Score</label><div class="v" id="oc-sc">0</div></div>
+        <div class="oc-st"><label>Best</label><div class="v gd" id="oc-bs">0</div></div>
+        <div class="oc-st"><label>Lines</label><div class="v" id="oc-ln">0</div></div>
+        <div class="oc-st"><label>Level</label><div class="v" id="oc-lv">0</div></div>
+      </div>
+      <div class="oc-btns">
+        <button class="btn-pa" onclick="playAgain()">⚡ Play Again</button>
+        <button class="btn-oa" onclick="openLB('pg-over')">🏆 Leaderboard</button>
+        <button class="btn-da" onclick="downloadResultCard()">⬇ DOWNLOAD RESULT CARD</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4 – LEADERBOARD -->
+<div class="pg" id="pg-lb">
+  <div class="lb-hd">
+    <button class="btn-bk" onclick="closeLB()">← Back</button>
+    <h1>🏆 HALL OF FAME</h1>
+    <div style="width:58px"></div>
+  </div>
+  <div class="podium" id="podium"></div>
+  <div class="lb-tbl" id="lb-tbl"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal-wrap gcard">
+    <div class="gcard-inner">
+      <h3>Restart?</h3>
+      <p>Your current game will be lost.</p>
+      <div class="modal-row">
+        <button class="m-y" onclick="doRestart()">Yes!</button>
+        <button class="m-n" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCRIPT
+══════════════════════════════════════════ -->
+<script src="./scripts/app.js"></script>
 </body>
 </html>
