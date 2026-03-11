@@ -372,6 +372,12 @@ function initKeyboard() {
         $('pause-overlay').classList.toggle('hidden',!paused);
         break;
       }
+      case 'KeyR': {
+        if (confirm('Restart? Current game will be lost.')) {
+          g.stop(); initGame();
+        }
+        break;
+      }
     }
   });
   document.addEventListener('keyup',e=>{
@@ -433,9 +439,29 @@ function initGameScreenButtons(){
     const p=State.game?.togglePause();
     $('pause-overlay').classList.toggle('hidden',!p);
   });
-  $('btn-quit').addEventListener('click',()=>{
+$('btn-quit').addEventListener('click',()=>{
     if(confirm('Quit current game?')){ State.game?.stop(); showScreen('setup-screen'); }
   });
+
+  // Restart (in-game panel)
+  const btnRestart = $('btn-restart');
+  if (btnRestart) {
+    btnRestart.addEventListener('click', () => {
+      if (confirm('Restart? Current game will be lost.')) {
+        State.game?.stop();
+        initGame();
+      }
+    });
+  }
+
+  // Restart (from pause overlay)
+  const btnPauseRestart = $('btn-pause-restart');
+  if (btnPauseRestart) {
+    btnPauseRestart.addEventListener('click', () => {
+      State.game?.stop();
+      initGame();
+    });
+  }
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────

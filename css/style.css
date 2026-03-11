@@ -482,3 +482,40 @@ body {
   .ctrl-btn { min-width:50px;height:42px; }
   .ctrl-btn.big { min-width:64px;height:52px; }
 }
+
+/* ── Restart button ── */
+.btn-restart {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-sm);
+  color: #fbbf24;
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-restart:hover {
+  background: rgba(251, 191, 36, 0.2);
+  box-shadow: 0 0 10px rgba(251,191,36,0.3);
+}
+
+.btn-pause-restart {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1.5px solid rgba(251, 191, 36, 0.5);
+  border-radius: var(--radius-sm);
+  color: #fbbf24;
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.95rem;
+  padding: 9px 22px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-pause-restart:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(251,191,36,0.4);
+}
+
+/* Pause overlay flex col gap */
+.pause-overlay { gap: 12px; }

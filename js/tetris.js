@@ -54,17 +54,18 @@ class TetrisGame {
   }
 
   reset() {
-    this.board     = Array.from({ length: TetrisGame.ROWS }, () => Array(TetrisGame.COLS).fill(null));
-    this.score     = 0;
-    this.lines     = 0;
-    this.level     = 1;
-    this.canHold   = true;
-    this.holdPiece = null;
-    this.isRunning = false;
-    this.isPaused  = false;
-    this.raf       = null;
-    this.lastDrop  = 0;
+    this.board          = Array.from({ length: TetrisGame.ROWS }, () => Array(TetrisGame.COLS).fill(null));
+    this.score          = 0;
+    this.lines          = 0;
+    this.level          = 1;
+    this.canHold        = true;
+    this.holdPiece      = null;
+    this.isRunning      = false;
+    this.isPaused       = false;
+    this.raf            = null;
+    this.lastDrop       = 0;
     this._lastSpeedTier = null;
+    this._lockCooldown  = false;  // ← bug fix: prevents cascade-lock on held down-key
     this.bag = [];
     this.current = this._spawnPiece();
     this.next    = this._spawnPiece();
@@ -96,14 +97,17 @@ class TetrisGame {
   moveRight() { if (this._valid(this.current.shape, this.current.x+1, this.current.y)) { this.current.x++; this._draw(); } }
 
   softDrop() {
+    if (this._lockCooldown) return;
     if (!this._valid(this.current.shape, this.current.x, this.current.y+1)) { this._lock(); return; }
     this.current.y++;
     this.score += 1;
+    this.lastDrop = performance.now();
     this._draw();
     this.onScoreUpdate(this._stats());
   }
 
   hardDrop() {
+    if (this._lockCooldown) return;
     let d = 0;
     while (this._valid(this.current.shape, this.current.x, this.current.y+1)) { this.current.y++; d++; }
     this.score += d * 2;
@@ -220,6 +224,11 @@ class TetrisGame {
   }
 
   _lock() {
+    // Lock cooldown prevents cascade-lock when down key is held
+    this._lockCooldown = true;
+    setTimeout(() => { this._lockCooldown = false; }, 120);
+    this.lastDrop = performance.now();
+
     const {shape,x,y,color,shadow}=this.current;
     for (let r=0;r<shape.length;r++)
       for (let c=0;c<shape[r].length;c++) {
