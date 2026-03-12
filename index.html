@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Magic Tetris</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./styles/main.css">
-</head>
+<link rel="stylesheet" href="style.css">
 <body>
 <div id="aurora">
   <div class="au au1"></div>
@@ -62,7 +61,6 @@
       <div class="bwrap-in">
         <canvas id="gc"></canvas>
       </div>
-      <img class="board-logo" id="logo-board" src="" alt="Magic Tetris logo">
       <div class="pov" id="pov">
         <h2>⏸ PAUSED</h2>
         <p>Press P / Esc to resume</p>
@@ -119,7 +117,6 @@
 <div class="pg" id="pg-over">
   <div class="oc gcard">
     <div class="gcard-inner">
-      <img class="oc-logo" id="logo-o" src="" alt="Magic Tetris">
       <h2>GAME OVER</h2>
       <img class="oc-av" id="oc-av" src="" alt="">
       <div class="oc-nm" id="oc-nm"></div>
@@ -133,8 +130,8 @@
       <div class="oc-btns">
         <button class="btn-pa" onclick="playAgain()">⚡ Play Again</button>
         <button class="btn-oa" onclick="openLB('pg-over')">🏆 Leaderboard</button>
-        <button class="btn-da" onclick="downloadResultCard()">⬇ DOWNLOAD RESULT CARD</button>
       </div>
+      <button class="btn-dl" onclick="downloadResult()">📥 Download Result</button>
     </div>
   </div>
 </div>
@@ -164,9 +161,21 @@
   </div>
 </div>
 
+<!-- IMAGE PREVIEW MODAL -->
+<div id="img-modal">
+  <img id="img-modal-img" src="" alt="Result">
+  <p class="img-modal-hint">
+    📱 <strong>Мобільний:</strong> утримуй зображення → «Зберегти»<br>
+    💻 <strong>ПК:</strong> правий клік → «Зберегти зображення»
+  </p>
+  <div class="img-modal-btns">
+    <button class="img-modal-dl" id="img-modal-dl-btn">⬇ Скачати</button>
+    <button class="img-modal-cl" onclick="document.getElementById('img-modal').classList.remove('open')">✕ Закрити</button>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════
      SCRIPT
 ══════════════════════════════════════════ -->
-<script src="./scripts/app.js"></script>
-</body>
-</html>
+<script src="game.js"></script>
+</body></html>
