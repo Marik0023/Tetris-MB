@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initParticles();
   renderPage();
   document.getElementById('lb-clear-btn').addEventListener('click', () => {
-    if (confirm('Clear all scores?')) { localStorage.removeItem('magic_tetris_lb'); renderPage(); }
+    if (confirm('Clear all scores?')) { Leaderboard.clear(); renderPage(); }
   });
 });
 
@@ -11,7 +11,7 @@ function renderPage() {
   document.getElementById('stat-total').textContent      = entries.length;
   document.getElementById('stat-best').textContent       = entries.length ? entries[0].score.toLocaleString() : '—';
   document.getElementById('stat-lines').textContent      = entries.length ? Math.max(...entries.map(e => e.lines)) : '—';
-  document.getElementById('stat-top-player').textContent = entries.length ? entries[0].nickname : '—';
+  document.getElementById('stat-top-player').textContent = entries.length ? (entries[0].nickname || entries[0].name) : '—';
   renderPodium(entries.slice(0, 3));
   renderTable(entries);
 }
@@ -29,7 +29,7 @@ function renderPodium(top) {
     const av = e.avatarDataUrl
       ? `<img class="podium-avatar" src="${e.avatarDataUrl}" alt="" />`
       : `<div class="podium-avatar-ph">🧙</div>`;
-    slot.innerHTML = `${av}<span class="podium-medal">${medals[rank-1]}</span><span class="podium-nick">${Leaderboard.escHtml(e.nickname)}</span><span class="podium-score">${e.score.toLocaleString()}</span><div class="podium-platform"></div>`;
+    slot.innerHTML = `${av}<span class="podium-medal">${medals[rank-1]}</span><span class="podium-nick">${Leaderboard.escHtml(e.nickname || e.name)}</span><span class="podium-score">${e.score.toLocaleString()}</span><div class="podium-platform"></div>`;
     c.appendChild(slot);
   });
 }
@@ -48,7 +48,7 @@ function renderTable(entries) {
     const av = e.avatarDataUrl ? `<img class="td-avatar" src="${e.avatarDataUrl}" alt="" />` : `<div class="td-avatar-ph">🧙</div>`;
     const ri = i < 3 ? medals[i] : `#${i+1}`;
     const dt = e.date ? new Date(e.date).toLocaleDateString() : '—';
-    tr.innerHTML = `<td><span class="td-rank ${rc(i)}">${ri}</span></td><td><div class="td-player">${av}<span class="td-name">${Leaderboard.escHtml(e.nickname)}</span></div></td><td class="td-score">${e.score.toLocaleString()}</td><td>${e.lines}</td><td>${e.level}</td><td class="td-rank-label">${e.rank||'—'}</td><td class="td-date">${dt}</td>`;
+    tr.innerHTML = `<td><span class="td-rank ${rc(i)}">${ri}</span></td><td><div class="td-player">${av}<span class="td-name">${Leaderboard.escHtml(e.nickname || e.name)}</span></div></td><td class="td-score">${e.score.toLocaleString()}</td><td>${e.lines}</td><td>${e.level}</td><td class="td-rank-label">${e.rank||'—'}</td><td class="td-date">${dt}</td>`;
     tbody.appendChild(tr);
   });
 }

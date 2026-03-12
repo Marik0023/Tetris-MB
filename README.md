@@ -10,7 +10,6 @@ Tetris-MB-main-cleaned/
 │   └── logo.webp
 ├── css/
 │   ├── leaderboard.css
-│   └── style.css
 ├── js/
 │   ├── leaderboard.js
 │   └── lb-page.js
