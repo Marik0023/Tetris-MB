@@ -24,8 +24,14 @@ const Leaderboard = (() => {
 
   function save(entries) {
     const clean = entries.map(normalizeEntry).sort((a,b) => b.score - a.score).slice(0, MAX);
-    localStorage.setItem(KEY, JSON.stringify(clean));
-    localStorage.setItem(LEGACY_KEY, JSON.stringify(clean));
+    try {
+      localStorage.setItem(KEY, JSON.stringify(clean));
+      try { localStorage.removeItem(LEGACY_KEY); } catch {}
+    } catch {
+      const noAvatars = clean.map(e => ({ ...e, avatar: '', avatarDataUrl: '' }));
+      localStorage.setItem(KEY, JSON.stringify(noAvatars));
+      try { localStorage.removeItem(LEGACY_KEY); } catch {}
+    }
   }
 
   function load() {

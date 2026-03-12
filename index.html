@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Magic Tetris</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20260313b">
 </head>
 <body>
 <div id="aurora">
@@ -91,7 +91,6 @@
         <div class="kh-row"><kbd>P/Esc</kbd>Pause</div>
       </div>
       <div class="sp-btns">
-        <button class="sb sb-p" id="btn-pause" onclick="togglePause()">⏸ Pause</button>
         <button class="sb sb-r" onclick="askRestart()">↩ Restart</button>
         <button class="sb sb-b" onclick="openLB('pg-game')">🏆 Leaderboard</button>
       </div>
@@ -165,12 +164,7 @@
 <!-- IMAGE PREVIEW MODAL -->
 <div id="img-modal">
   <img id="img-modal-img" src="" alt="Result">
-  <p class="img-modal-hint">
-    📱 <strong>Mobile:</strong> press and hold the image → “Save”<br>
-    💻 <strong>Desktop:</strong> right-click → “Save image as”
-  </p>
-  <div class="img-modal-btns">
-    <button class="img-modal-dl" id="img-modal-dl-btn">⬇ Download</button>
+  <div class="img-modal-btns img-modal-btns--single">
     <button class="img-modal-cl" onclick="document.getElementById('img-modal').classList.remove('open')">✕ Close</button>
   </div>
 </div>
@@ -178,6 +172,6 @@
 <!-- ══════════════════════════════════════════
      SCRIPT
 ══════════════════════════════════════════ -->
-<script src="game.js"></script>
+<script src="game.js?v=20260313b"></script>
 </body>
 </html>
