@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -22,7 +22,7 @@
   <div class="start-card gcard">
     <div class="gcard-inner">
       <h2>✦ ENTER THE ARENA</h2>
-      <p class="sub">Choose your wizard identity</p>
+      <p class="sub">Choose your player identity</p>
 
       <div class="av-wrap">
         <div class="av-ring" onclick="document.getElementById('av-in').click()">
@@ -32,16 +32,16 @@
           </div>
         </div>
         <input type="file" id="av-in" accept="image/*" style="display:none">
-        <span class="av-hint">TAP TO UPLOAD AVATAR</span>
+        <span class="av-hint">TAP TO CHANGE AVATAR</span>
       </div>
 
       <div class="fld">
-        <label>✦ Wizard Name</label>
+        <label>✦ Player Name</label>
         <input id="nick" type="text" placeholder="Enter your name…" maxlength="18"
                autocomplete="off" onkeydown="if(event.key==='Enter')onStart()">
       </div>
 
-      <button class="btn-main" onclick="onStart()">⚡ START PLAYING</button>
+      <button class="btn-main" onclick="onStart()">⚡ START GAME</button>
       <button class="btn-sec" onclick="openLB('pg-start')">🏆 Leaderboard</button>
     </div>
   </div>
@@ -132,7 +132,7 @@
         <button class="btn-pa" onclick="playAgain()">⚡ Play Again</button>
         <button class="btn-oa" onclick="openLB('pg-over')">🏆 Leaderboard</button>
       </div>
-      <button class="btn-dl" onclick="downloadResult()">📥 Download Result</button>
+      <button class="btn-dl" onclick="downloadResult()">📥 Download Card</button>
     </div>
   </div>
 </div>
@@ -152,28 +152,16 @@
 <div class="modal-bg" id="modal">
   <div class="modal-wrap gcard">
     <div class="gcard-inner">
-      <h3>Restart?</h3>
-      <p>Your current game will be lost.</p>
+      <h3>Restart game?</h3>
+      <p>Your current run will be lost.</p>
       <div class="modal-row">
-        <button class="m-y" onclick="doRestart()">Yes!</button>
+        <button class="m-y" onclick="doRestart()" >Restart</button>
         <button class="m-n" onclick="closeModal()">Cancel</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- IMAGE PREVIEW MODAL -->
-<div id="img-modal">
-  <img id="img-modal-img" src="" alt="Result">
-  <p class="img-modal-hint">
-    📱 <strong>Мобільний:</strong> утримуй зображення → «Зберегти»<br>
-    💻 <strong>ПК:</strong> правий клік → «Зберегти зображення»
-  </p>
-  <div class="img-modal-btns">
-    <button class="img-modal-dl" id="img-modal-dl-btn">⬇ Скачати</button>
-    <button class="img-modal-cl" onclick="document.getElementById('img-modal').classList.remove('open')">✕ Закрити</button>
-  </div>
-</div>
 
 <!-- ══════════════════════════════════════════
      SCRIPT
