@@ -91,6 +91,7 @@
         <div class="kh-row"><kbd>P/Esc</kbd>Pause</div>
       </div>
       <div class="sp-btns">
+        <button class="sb sb-p" id="btn-pause" onclick="togglePause()">⏸ Pause</button>
         <button class="sb sb-r" onclick="askRestart()">↩ Restart</button>
         <button class="sb sb-b" onclick="openLB('pg-game')">🏆 Leaderboard</button>
       </div>
@@ -164,7 +165,12 @@
 <!-- IMAGE PREVIEW MODAL -->
 <div id="img-modal">
   <img id="img-modal-img" src="" alt="Result">
-  <div class="img-modal-btns img-modal-btns--single">
+  <p class="img-modal-hint">
+    📱 <strong>Mobile:</strong> press and hold the image → “Save”<br>
+    💻 <strong>Desktop:</strong> right-click → “Save image as”
+  </p>
+  <div class="img-modal-btns">
+    <button class="img-modal-dl" id="img-modal-dl-btn">⬇ Download</button>
     <button class="img-modal-cl" onclick="document.getElementById('img-modal').classList.remove('open')">✕ Close</button>
   </div>
 </div>
