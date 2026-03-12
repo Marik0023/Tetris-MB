@@ -948,7 +948,7 @@ async function downloadResult(){
 
   cx.font='600 18px Nunito, sans-serif';
   cx.fillStyle='rgba(196,181,253,.78)';
-  cx.fillText('Arcade result', SX+54, SY+425);
+  cx.fillText('magic-tetris.game', SX+54, SY+425);
 
   const stats=[
     ['SCORE', score.toLocaleString(), '#ffffff'],
@@ -980,180 +980,126 @@ async function downloadResult(){
 
   const dateStr=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
   cx.font='700 18px Nunito, sans-serif';
-  cx.fillStyle='rgba(196,181,253,.52)';
+  cx.fillStyle='rgba(196,181,253,.48)';
   cx.textAlign='left';
-  cx.fillText('magic-tetris.game', SX+50, SY+SH-32);
+  cx.fillText('Result card', SX+50, SY+SH-32);
   cx.textAlign='right';
   cx.fillText(dateStr, SX+SW-50, SY+SH-32);
 
-  const CY=SY+SH+44;
-  const deckX=SX-4, deckY=CY, deckW=SW+8, deckH=424;
-  const deckGrad=cx.createLinearGradient(deckX,deckY,deckX,deckY+deckH);
-  deckGrad.addColorStop(0,'rgba(23,8,56,.94)');
-  deckGrad.addColorStop(1,'rgba(12,4,31,.90)');
-  fillRound(deckX,deckY,deckW,deckH,34,deckGrad);
-  strokeRound(deckX,deckY,deckW,deckH,34,'rgba(124,58,237,.24)',2);
-  fillRound(deckX+14,deckY+16,deckW-28,deckH-32,28,'rgba(255,255,255,.014)');
+  const CY=SY+SH+48;
+  fillRound(SX-8,CY,SW+16,420,30,'rgba(20,6,48,.72)');
+  strokeRound(SX-8,CY,SW+16,420,30,'rgba(124,58,237,.18)',2);
 
   cx.save();
-  cx.shadowColor='rgba(34,238,255,.08)';
-  cx.shadowBlur=18;
-  cx.strokeStyle='rgba(34,238,255,.10)';
-  cx.lineWidth=1.4;
-  cx.beginPath();
-  cx.moveTo(deckX+38,deckY+22);
-  cx.lineTo(deckX+deckW-38,deckY+22);
-  cx.stroke();
+  cx.globalAlpha=.08;
+  const patternColors=['#22eeff','#ff3ea5','#7c3aed','#ffd700'];
+  for(let row=0; row<4; row++){
+    for(let col=0; col<7; col++){
+      const px=SX+32+col*120+(row%2)*12;
+      const py=CY+26+row*74;
+      fillRound(px,py,26,26,6,patternColors[(row+col)%patternColors.length]);
+      fillRound(px+28,py,26,26,6,patternColors[(row+col+1)%patternColors.length]);
+      fillRound(px,py+28,26,26,6,patternColors[(row+col+2)%patternColors.length]);
+      fillRound(px+28,py+28,26,26,6,patternColors[(row+col+3)%patternColors.length]);
+    }
+  }
   cx.restore();
 
-  const decoCols=['#22eeff','#ff3ea5','#7c3aed','#ffd700'];
-  const drawMiniStack=(x,y)=>{
-    cx.save();
-    cx.globalAlpha=.18;
-    decoCols.forEach((color,i)=>{
-      const dx=i%2, dy=Math.floor(i/2);
-      fillRound(x+dx*28,y+dy*28,22,22,6,color);
-    });
-    cx.restore();
-  };
-  drawMiniStack(deckX+64, deckY+44);
-  drawMiniStack(deckX+deckW-114, deckY+44);
-
-  const controlsY=deckY+214;
-  const labelsY=deckY+356;
-
-  const drawPill=(x,y,w,h,label)=>{
-    cx.save();
-    cx.shadowColor='rgba(124,58,237,.16)';
-    cx.shadowBlur=10;
+  const dpX=SX+150, dpY=CY+210, size=54;
+  const dpadRects=[
+    [dpX, dpY-size, size, size],
+    [dpX, dpY+size, size, size],
+    [dpX-size, dpY, size, size],
+    [dpX+size, dpY, size, size],
+    [dpX, dpY, size, size],
+  ];
+  cx.save();
+  cx.shadowColor='rgba(124,58,237,.45)';
+  cx.shadowBlur=18;
+  dpadRects.forEach(([x,y,w,h])=>{
     const g=cx.createLinearGradient(x,y,x+w,y+h);
-    g.addColorStop(0,'rgba(57,20,113,.96)');
-    g.addColorStop(1,'rgba(22,8,52,.96)');
-    fillRound(x,y,w,h,h/2,g);
-    cx.restore();
-    strokeRound(x,y,w,h,h/2,'rgba(196,181,253,.24)',1.4);
-    cx.font='900 13px Orbitron, sans-serif';
-    cx.fillStyle='rgba(222,205,255,.82)';
+    g.addColorStop(0,'rgba(58,21,116,.96)');
+    g.addColorStop(1,'rgba(19,5,55,.96)');
+    fillRound(x,y,w,h,12,g);
+    strokeRound(x,y,w,h,12,'rgba(196,181,253,.38)',1.5);
+  });
+  cx.restore();
+  cx.font='900 24px Orbitron, sans-serif';
+  cx.fillStyle='rgba(244,244,255,.9)';
+  cx.textAlign='center';
+  cx.textBaseline='middle';
+  cx.fillText('▲', dpX+size/2, dpY-size/2);
+  cx.fillText('▼', dpX+size/2, dpY+size*1.5);
+  cx.fillText('◀', dpX-size/2, dpY+size/2);
+  cx.fillText('▶', dpX+size*1.5, dpY+size/2);
+  cx.textBaseline='alphabetic';
+
+  cx.font='700 16px Nunito, sans-serif';
+  cx.fillStyle='rgba(196,181,253,.68)';
+  cx.fillText('MOVE', dpX+size/2, CY+340);
+
+  const midX=W/2, midY=CY+230;
+  [
+    [midX-110, midY+12, 28, 'SEL'],
+    [midX, midY, 44, '●'],
+    [midX+110, midY+12, 28, 'STA']
+  ].forEach(([x,y,r,label], idx)=>{
+    cx.save();
+    cx.shadowColor=idx===1 ? 'rgba(176,110,255,.55)' : 'rgba(124,58,237,.22)';
+    cx.shadowBlur=idx===1 ? 18 : 10;
+    const rad=cx.createRadialGradient(x,y,0,x,y,r);
+    rad.addColorStop(0, idx===1 ? 'rgba(168,85,247,.9)' : 'rgba(61,24,115,.95)');
+    rad.addColorStop(1, 'rgba(24,8,58,.95)');
+    cx.fillStyle=rad;
+    cx.beginPath(); cx.arc(x,y,r,0,Math.PI*2); cx.fill();
+    cx.strokeStyle=idx===1 ? 'rgba(196,181,253,.7)' : 'rgba(196,181,253,.26)';
+    cx.lineWidth=2;
+    cx.beginPath(); cx.arc(x,y,r,0,Math.PI*2); cx.stroke();
+    cx.fillStyle=idx===1 ? '#f3e8ff' : 'rgba(196,181,253,.74)';
+    cx.font=idx===1 ? '900 24px Orbitron, sans-serif' : '900 14px Orbitron, sans-serif';
     cx.textAlign='center';
     cx.textBaseline='middle';
-    cx.fillText(label, x+w/2, y+h/2+1);
-    cx.textBaseline='alphabetic';
-  };
-
-  const drawDpadSquare=(x,y,size)=>{
-    cx.save();
-    cx.shadowColor='rgba(176,110,255,.24)';
-    cx.shadowBlur=16;
-    const g=cx.createLinearGradient(x,y,x+size,y+size);
-    g.addColorStop(0,'rgba(74,30,146,.98)');
-    g.addColorStop(1,'rgba(25,9,57,.98)');
-    fillRound(x,y,size,size,16,g);
+    cx.fillText(label, x, y+(idx===1 ? 1 : 0));
     cx.restore();
-    strokeRound(x,y,size,size,16,'rgba(196,181,253,.30)',1.4);
-  };
-
-  const dCenterX=deckX+196;
-  const dCenterY=controlsY;
-  const dSize=62;
-  const dGap=4;
-  drawDpadSquare(dCenterX-dSize/2, dCenterY-dSize/2, dSize);
-  drawDpadSquare(dCenterX-dSize/2, dCenterY-(dSize*1.5)-dGap, dSize);
-  drawDpadSquare(dCenterX-dSize/2, dCenterY+(dSize/2)+dGap, dSize);
-  drawDpadSquare(dCenterX-(dSize*1.5)-dGap, dCenterY-dSize/2, dSize);
-  drawDpadSquare(dCenterX+(dSize/2)+dGap, dCenterY-dSize/2, dSize);
-
-  cx.font='900 24px Orbitron, sans-serif';
-  cx.fillStyle='rgba(244,244,255,.92)';
-  cx.textAlign='center';
-  cx.textBaseline='middle';
-  cx.fillText('▲', dCenterX, dCenterY-dSize-4);
-  cx.fillText('▼', dCenterX, dCenterY+dSize+4);
-  cx.fillText('◀', dCenterX-dSize-4, dCenterY+1);
-  cx.fillText('▶', dCenterX+dSize+4, dCenterY+1);
+  });
   cx.textBaseline='alphabetic';
-
-  const midX=W/2;
-  const homeY=controlsY;
-  const pillW=86, pillH=28;
-  const selectX=midX-145;
-  const startX=midX+59;
-  drawPill(selectX, homeY-pillH/2, pillW, pillH, 'SELECT');
-  drawPill(startX, homeY-pillH/2, pillW, pillH, 'START');
-
-  cx.save();
-  cx.shadowColor='rgba(176,110,255,.42)';
-  cx.shadowBlur=22;
-  const homeGrad=cx.createRadialGradient(midX, homeY, 0, midX, homeY, 54);
-  homeGrad.addColorStop(0,'rgba(170,95,255,.96)');
-  homeGrad.addColorStop(1,'rgba(28,10,60,.98)');
-  cx.fillStyle=homeGrad;
-  cx.beginPath();
-  cx.arc(midX, homeY, 48, 0, Math.PI*2);
-  cx.fill();
-  cx.restore();
-  cx.strokeStyle='rgba(230,220,255,.42)';
-  cx.lineWidth=2;
-  cx.beginPath();
-  cx.arc(midX, homeY, 48, 0, Math.PI*2);
-  cx.stroke();
-  cx.fillStyle='#f5ecff';
-  cx.font='900 26px Orbitron, sans-serif';
+  cx.font='700 14px Nunito, sans-serif';
+  cx.fillStyle='rgba(196,181,253,.62)';
   cx.textAlign='center';
-  cx.textBaseline='middle';
-  cx.fillText('•', midX, homeY+1);
-  cx.textBaseline='alphabetic';
+  cx.fillText('SELECT', midX-110, CY+340);
+  cx.fillText('HOME', midX, CY+340);
+  cx.fillText('START', midX+110, CY+340);
 
-  const actionCX=deckX+deckW-164;
-  const actionCY=controlsY;
-  const br=39;
+  const bx=SX+SW-196, by=CY+162, br=40;
   const buttons=[
-    ['A', actionCX+42, actionCY-52, '#22eeff'],
-    ['B', actionCX+98, actionCY+4, '#ff3ea5'],
-    ['X', actionCX-14, actionCY+4, '#7c3aed'],
-    ['Y', actionCX+42, actionCY+60, '#ffd700']
+    ['A', bx+48, by-34, '#22eeff'],
+    ['B', bx+104, by+16, '#ff3ea5'],
+    ['X', bx-10, by+16, '#7c3aed'],
+    ['Y', bx+48, by+68, '#ffd700']
   ];
   buttons.forEach(([label,x,y,color])=>{
     cx.save();
     cx.shadowColor=color;
-    cx.shadowBlur=24;
+    cx.shadowBlur=22;
     const rad=cx.createRadialGradient(x,y,0,x,y,br);
-    rad.addColorStop(0,color+'77');
-    rad.addColorStop(1,'rgba(18,10,38,.96)');
+    rad.addColorStop(0,color+'66');
+    rad.addColorStop(1,'rgba(16,10,35,.95)');
     cx.fillStyle=rad;
-    cx.beginPath();
-    cx.arc(x,y,br,0,Math.PI*2);
-    cx.fill();
-    cx.restore();
+    cx.beginPath(); cx.arc(x,y,br,0,Math.PI*2); cx.fill();
     cx.strokeStyle=color;
     cx.lineWidth=3;
-    cx.beginPath();
-    cx.arc(x,y,br,0,Math.PI*2);
-    cx.stroke();
+    cx.beginPath(); cx.arc(x,y,br,0,Math.PI*2); cx.stroke();
     cx.fillStyle=color;
-    cx.font='900 29px Orbitron, sans-serif';
+    cx.font='900 28px Orbitron, sans-serif';
     cx.textAlign='center';
     cx.textBaseline='middle';
     cx.fillText(label,x,y+1);
-    cx.textBaseline='alphabetic';
+    cx.restore();
   });
-
-  cx.save();
-  cx.strokeStyle='rgba(196,181,253,.10)';
-  cx.lineWidth=1;
-  cx.beginPath();
-  cx.moveTo(deckX+44, deckY+302);
-  cx.lineTo(deckX+deckW-44, deckY+302);
-  cx.stroke();
-  cx.restore();
-
-  cx.font='800 16px Orbitron, sans-serif';
-  cx.fillStyle='rgba(196,181,253,.74)';
-  cx.textAlign='center';
-  cx.fillText('MOVE', dCenterX, labelsY);
-  cx.fillText('SELECT', selectX+pillW/2, labelsY);
-  cx.fillText('HOME', midX, labelsY);
-  cx.fillText('START', startX+pillW/2, labelsY);
-  cx.fillText('DROP / ROTATE', actionCX+42, labelsY);
+  cx.textBaseline='alphabetic';
+  cx.font='700 16px Nunito, sans-serif';
+  cx.fillStyle='rgba(196,181,253,.68)';
+  cx.fillText('DROP / ROTATE', bx+48, CY+340);
 
   const speaker = (xStart, yStart) => {
     for(let row=0; row<4; row++){
