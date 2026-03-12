@@ -948,7 +948,7 @@ async function downloadResult(){
 
   cx.font='600 18px Nunito, sans-serif';
   cx.fillStyle='rgba(196,181,253,.78)';
-  cx.fillText('Arcade result', SX+54, SY+425);
+  cx.fillText('Player result', SX+54, SY+425);
 
   const stats=[
     ['SCORE', score.toLocaleString(), '#ffffff'],
@@ -956,8 +956,8 @@ async function downloadResult(){
     ['LINES', String(lines), '#d8b4fe'],
     ['LEVEL', String(level), '#22eeff']
   ];
-  const cardW=230, cardH=108, gap=22;
-  const statsX=SX+330, statsY=SY+194;
+  const cardW=218, cardH=104, gap=18;
+  const statsX=SX+334, statsY=SY+196;
   stats.forEach((item,index)=>{
     const col=index%2;
     const row=Math.floor(index/2);
@@ -984,7 +984,7 @@ async function downloadResult(){
   cx.textAlign='left';
   cx.fillText('magic-tetris.game', SX+50, SY+SH-32);
   cx.textAlign='right';
-  cx.fillText(dateStr, SX+SW-50, SY+SH-32);
+  cx.fillText(dateStr, SX+SW-62, SY+SH-32);
 
   const CY=SY+SH+44;
   const deckX=SX-4, deckY=CY, deckW=SW+8, deckH=424;
@@ -1019,8 +1019,8 @@ async function downloadResult(){
   drawMiniStack(deckX+64, deckY+44);
   drawMiniStack(deckX+deckW-114, deckY+44);
 
-  const controlsY=deckY+214;
-  const labelsY=deckY+356;
+  const controlsY=deckY+202;
+  const labelsY=deckY+346;
 
   const drawPill=(x,y,w,h,label)=>{
     cx.save();
@@ -1052,10 +1052,10 @@ async function downloadResult(){
     strokeRound(x,y,size,size,16,'rgba(196,181,253,.30)',1.4);
   };
 
-  const dCenterX=deckX+196;
+  const dCenterX=deckX+214;
   const dCenterY=controlsY;
-  const dSize=62;
-  const dGap=4;
+  const dSize=58;
+  const dGap=5;
   drawDpadSquare(dCenterX-dSize/2, dCenterY-dSize/2, dSize);
   drawDpadSquare(dCenterX-dSize/2, dCenterY-(dSize*1.5)-dGap, dSize);
   drawDpadSquare(dCenterX-dSize/2, dCenterY+(dSize/2)+dGap, dSize);
@@ -1072,11 +1072,11 @@ async function downloadResult(){
   cx.fillText('▶', dCenterX+dSize+4, dCenterY+1);
   cx.textBaseline='alphabetic';
 
-  const midX=W/2;
+  const midX=W/2+8;
   const homeY=controlsY;
-  const pillW=86, pillH=28;
-  const selectX=midX-145;
-  const startX=midX+59;
+  const pillW=82, pillH=28;
+  const selectX=midX-148;
+  const startX=midX+66;
   drawPill(selectX, homeY-pillH/2, pillW, pillH, 'SELECT');
   drawPill(startX, homeY-pillH/2, pillW, pillH, 'START');
 
@@ -1103,7 +1103,7 @@ async function downloadResult(){
   cx.fillText('•', midX, homeY+1);
   cx.textBaseline='alphabetic';
 
-  const actionCX=deckX+deckW-164;
+  const actionCX=deckX+deckW-178;
   const actionCY=controlsY;
   const br=39;
   const buttons=[
@@ -1141,12 +1141,12 @@ async function downloadResult(){
   cx.strokeStyle='rgba(196,181,253,.10)';
   cx.lineWidth=1;
   cx.beginPath();
-  cx.moveTo(deckX+44, deckY+302);
-  cx.lineTo(deckX+deckW-44, deckY+302);
+  cx.moveTo(deckX+44, deckY+292);
+  cx.lineTo(deckX+deckW-44, deckY+292);
   cx.stroke();
   cx.restore();
 
-  cx.font='800 16px Orbitron, sans-serif';
+  cx.font='800 15px Orbitron, sans-serif';
   cx.fillStyle='rgba(196,181,253,.74)';
   cx.textAlign='center';
   cx.fillText('MOVE', dCenterX, labelsY);
@@ -1169,8 +1169,8 @@ async function downloadResult(){
       }
     }
   };
-  speaker(SX+42, CY+368);
-  speaker(SX+SW-150, CY+368);
+  speaker(SX+58, CY+358);
+  speaker(SX+SW-166, CY+358);
 
   cx.font='800 18px Orbitron, sans-serif';
   cx.textAlign='center';
