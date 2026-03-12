@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="style.css?v=20260313b">
 </head>
 <body>
+<canvas id="bg-cv"></canvas>
 <div id="aurora">
   <div class="au au1"></div>
   <div class="au au2"></div>
@@ -58,6 +59,24 @@
   </div>
 
   <div class="gbody">
+
+    <!-- LEFT PANEL -->
+    <div class="lp">
+      <div class="lp-player">
+        <img class="lp-av" id="lp-av" src="" alt="">
+        <div class="lp-nm" id="lp-nm"></div>
+        <div class="lp-status">● PLAYING</div>
+      </div>
+      <div class="lp-divider"></div>
+      <div class="lp-tip">
+        <div class="lp-tip-label">TIP</div>
+        <div class="lp-tip-text" id="lp-tip">Hard drop scores 2pts per row</div>
+      </div>
+      <div class="lp-piece-preview" id="lp-piece-preview">
+        <div class="lp-pp-label">PIECE</div>
+        <div class="lp-blocks" id="lp-blocks"></div>
+      </div>
+    </div>
     <div class="bwrap" id="bwrap">
       <div class="bwrap-in">
         <canvas id="gc"></canvas>
