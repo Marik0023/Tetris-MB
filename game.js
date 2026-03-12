@@ -49,40 +49,94 @@ const P={name:'',avatar:'',best:0};
 let LB=loadLB();
 let lbFrom='pg-start'; // which page opened leaderboard
 
+function safeAvatarForStorage(dataUrl=''){
+  if(typeof dataUrl !== 'string') return '';
+  if(!dataUrl.startsWith('data:')) return dataUrl;
+  return dataUrl.length > 70000 ? '' : dataUrl;
+}
+
+function normalizeLBEntry(e={}){
+  const avatar = safeAvatarForStorage(e.avatar || e.avatarDataUrl || '');
+  return {
+    ...e,
+    name: e.name || e.nickname || '',
+    nickname: e.nickname || e.name || '',
+    avatar,
+    avatarDataUrl: avatar,
+    score: Number(e.score || 0),
+    lines: Number(e.lines || 0),
+    level: Number(e.level || 1),
+    rank: e.rank || 'Wizard',
+    date: Number(e.date || Date.now())
+  };
+}
+
 function loadLB(){
   try {
     const raw = localStorage.getItem(LB_KEY) || localStorage.getItem(LEGACY_LB_KEY) || '[]';
     const parsed = JSON.parse(raw) || [];
-    return parsed.map(e => ({
-      ...e,
-      name: e.name || e.nickname || '',
-      nickname: e.nickname || e.name || '',
-      avatar: e.avatar || e.avatarDataUrl || '',
-      avatarDataUrl: e.avatarDataUrl || e.avatar || '',
-      score: Number(e.score || 0),
-      lines: Number(e.lines || 0),
-      level: Number(e.level || 1),
-      rank: e.rank || 'Wizard',
-      date: Number(e.date || Date.now())
-    })).sort((a,b)=>b.score-a.score);
+    return parsed.map(normalizeLBEntry).sort((a,b)=>b.score-a.score).slice(0,50);
   } catch {
     return [];
   }
 }
 function writeLB(){
-  localStorage.setItem(LB_KEY, JSON.stringify(LB));
-  localStorage.setItem(LEGACY_LB_KEY, JSON.stringify(LB));
+  const clean = LB.map(normalizeLBEntry).sort((a,b)=>b.score-a.score).slice(0,50);
+  LB = clean;
+  try {
+    localStorage.setItem(LB_KEY, JSON.stringify(clean));
+    try { localStorage.removeItem(LEGACY_LB_KEY); } catch {}
+    return true;
+  } catch {
+    try {
+      const noAvatars = clean.map(e => ({ ...e, avatar:'', avatarDataUrl:'' }));
+      LB = noAvatars;
+      localStorage.setItem(LB_KEY, JSON.stringify(noAvatars));
+      try { localStorage.removeItem(LEGACY_LB_KEY); } catch {}
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 function savePlayerProfile(){
-  localStorage.setItem(PLAYER_KEY, JSON.stringify({name:P.name, avatar:P.avatar}));
+  const payload = {name:P.name, avatar:safeAvatarForStorage(P.avatar)};
+  try {
+    localStorage.setItem(PLAYER_KEY, JSON.stringify(payload));
+  } catch {
+    try { localStorage.setItem(PLAYER_KEY, JSON.stringify({name:P.name, avatar:''})); } catch {}
+  }
 }
 function loadPlayerProfile(){
   try {
     const data = JSON.parse(localStorage.getItem(PLAYER_KEY) || 'null');
     if(!data) return;
     P.name = data.name || '';
-    P.avatar = data.avatar || '';
+    P.avatar = safeAvatarForStorage(data.avatar || '');
   } catch {}
+}
+async function shrinkImage(file, maxSize=128, quality=.82){
+  return new Promise(resolve => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const cv = document.createElement('canvas');
+        cv.width = w;
+        cv.height = h;
+        const cx = cv.getContext('2d');
+        cx.drawImage(img, 0, 0, w, h);
+        resolve(cv.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(typeof fr.result === 'string' ? fr.result : '');
+      img.src = fr.result;
+    };
+    fr.onerror = () => resolve('');
+    fr.readAsDataURL(file);
+  });
 }
 function applyPlayerProfileToStart(){
   const nickEl = document.getElementById('nick');
@@ -103,17 +157,14 @@ loadPlayerProfile();
 applyPlayerProfileToStart();
 
 // Load avatar from file
-document.getElementById('av-in').addEventListener('change',function(e){
+document.getElementById('av-in').addEventListener('change', async function(e){
   const f=e.target.files[0]; if(!f) return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    P.avatar=ev.target.result;
-    const img=document.getElementById('av-img');
-    img.src=P.avatar; img.style.display='block';
-    document.getElementById('av-ico').style.display='none';
-    savePlayerProfile();
-  };
-  reader.readAsDataURL(f);
+  const smallAvatar = await shrinkImage(f, 128, .82);
+  P.avatar = smallAvatar || P.avatar;
+  const img=document.getElementById('av-img');
+  img.src=P.avatar; img.style.display='block';
+  document.getElementById('av-ico').style.display='none';
+  savePlayerProfile();
 });
 
 // Generate letter-avatar when no upload
@@ -354,7 +405,8 @@ function initGame(){
   nxt = spawnPiece(rndKey());
 
   document.getElementById('pov').style.display='none';
-  document.getElementById('btn-pause').textContent='⏸ Pause';
+  const pauseBtn = document.getElementById('btn-pause');
+  if(pauseBtn) pauseBtn.textContent='⏸ Pause';
 
   updateHUD();
   renderNext();
@@ -709,14 +761,14 @@ function updateHUD(){
 /* ── GAME OVER ── */
 function gameOver(){
   state='over';
-  saveLB();
+  try { saveLB(); } catch {}
   const rank = myRank();
   document.getElementById('oc-sc').textContent = score.toLocaleString();
   document.getElementById('oc-bs').textContent = P.best.toLocaleString();
   document.getElementById('oc-ln').textContent = lines;
   document.getElementById('oc-lv').textContent = level;
   document.getElementById('oc-rnk').textContent = `🏆 Rank #${rank}`;
-  setTimeout(() => nav('pg-over'), 400);
+  setTimeout(() => nav('pg-over'), 180);
 }
 
 function playAgain(){ nav('pg-game'); initGame(); }
@@ -1121,15 +1173,16 @@ function roundRect(cx,x,y,w,h,r){
 /* ── PAUSE ── */
 function togglePause(){
   if(state==='over' || state==='anim' || state==='idle') return;
+  const pauseBtn = document.getElementById('btn-pause');
   if(state==='play'){
     state='pause';
     document.getElementById('pov').style.display='flex';
-    document.getElementById('btn-pause').textContent='▶ Resume';
+    if(pauseBtn) pauseBtn.textContent='▶ Resume';
   } else if(state==='pause'){
     state='play';
     lastTs=0; // prevents dt spike
     document.getElementById('pov').style.display='none';
-    document.getElementById('btn-pause').textContent='⏸ Pause';
+    if(pauseBtn) pauseBtn.textContent='⏸ Pause';
   }
 }
 
