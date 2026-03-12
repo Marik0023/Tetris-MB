@@ -4,31 +4,16 @@
    STARS + PARTICLES
 ───────────────────────────────────────── */
 ;(function(){
-  // Stars
+  // Minimal sharp stars
   const s=document.getElementById('stars');
-  for(let i=0;i<120;i++){
+  for(let i=0;i<70;i++){
     const el=document.createElement('div');
     el.className='st';
-    const sz=Math.random()*2+.2;
+    const sz=Math.random()*1.4+0.3;
     el.style.cssText=`width:${sz}px;height:${sz}px;`+
       `left:${Math.random()*100}%;top:${Math.random()*100}%;`+
-      `animation:tw ${1.5+Math.random()*4}s ${Math.random()*7}s infinite;`;
+      `animation:tw ${2+Math.random()*5}s ${Math.random()*8}s infinite;`;
     s.appendChild(el);
-  }
-  // Floating particles
-  const p=document.getElementById('pts');
-  const pcols=['#7C3AED','#FF3EA5','#22EEFF','#a855f7','#FFD700'];
-  for(let i=0;i<18;i++){
-    const el=document.createElement('div');
-    el.className='pt';
-    const sz=Math.random()*5+2;
-    el.style.cssText=`width:${sz}px;height:${sz}px;`+
-      `left:${Math.random()*100}%;`+
-      `background:${pcols[i%pcols.length]};`+
-      `opacity:.5;`+
-      `animation:ptdrift ${12+Math.random()*18}s ${Math.random()*10}s linear infinite;`+
-      `filter:blur(${sz>5?1:0}px);`;
-    p.appendChild(el);
   }
 })();
 
@@ -353,13 +338,13 @@ const LINES_PER_LEVEL=5;
 /* ── PIECE DATA ── */
 // Spawn shapes as minimal bounding boxes
 const PIECES={
-  I:{ sh:[[1,1,1,1]],       col:'#22EEFF', shadow:'#007788' },
-  O:{ sh:[[1,1],[1,1]],     col:'#FFE53B', shadow:'#997700' },
-  T:{ sh:[[0,1,0],[1,1,1]], col:'#DD22FF', shadow:'#770099' },
-  S:{ sh:[[0,1,1],[1,1,0]], col:'#33FF66', shadow:'#007722' },
-  Z:{ sh:[[1,1,0],[0,1,1]], col:'#FF2244', shadow:'#880011' },
-  J:{ sh:[[1,0,0],[1,1,1]], col:'#3399FF', shadow:'#003388' },
-  L:{ sh:[[0,0,1],[1,1,1]], col:'#FF7733', shadow:'#883300' },
+  I:{ sh:[[1,1,1,1]],       col:'#00F5D4', shadow:'#007A6A' },
+  O:{ sh:[[1,1],[1,1]],     col:'#FFC700', shadow:'#8B6E00' },
+  T:{ sh:[[0,1,0],[1,1,1]], col:'#9B72FF', shadow:'#4A2B9A' },
+  S:{ sh:[[0,1,1],[1,1,0]], col:'#00E878', shadow:'#006B35' },
+  Z:{ sh:[[1,1,0],[0,1,1]], col:'#FF3A5C', shadow:'#8B0020' },
+  J:{ sh:[[1,0,0],[1,1,1]], col:'#3D8EFF', shadow:'#0A3A8A' },
+  L:{ sh:[[0,0,1],[1,1,1]], col:'#FF7A2F', shadow:'#8B3500' },
 };
 const PKEYS=Object.keys(PIECES);
 
@@ -650,7 +635,7 @@ function render(){
   ctx.clearRect(0,0, canvas.width, canvas.height);
 
   // --- Grid ---
-  ctx.strokeStyle = 'rgba(255,255,255,.025)';
+  ctx.strokeStyle = 'rgba(0,245,212,.03)';
   ctx.lineWidth = 1;
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++)
     ctx.strokeRect(c*CELL, r*CELL, CELL, CELL);
@@ -660,7 +645,7 @@ function render(){
     let gr = cur.row;
     while(!collides(gr+1, cur.col, cur.sh)) gr++;
     if(gr > cur.row){
-      ctx.globalAlpha = 0.14;
+      ctx.globalAlpha = 0.1;
       drawPiece(ctx, cur.col, gr, cur.sh, cur.key);
       ctx.globalAlpha = 1;
     }
@@ -697,42 +682,52 @@ function drawPiece(cx, col, row, sh, key){
 
 function drawCell(cx, x, y, key, sz){
   if(key === 'FL'){
-    // Line-clear flash: bright white glow
-    cx.shadowColor='#fff'; cx.shadowBlur=18;
+    cx.shadowColor='#00F5D4'; cx.shadowBlur=24;
     cx.fillStyle='rgba(255,255,255,.95)';
     cx.fillRect(x, y, sz, sz);
+    cx.shadowColor='#fff'; cx.shadowBlur=10;
+    cx.fillStyle='rgba(200,255,250,.8)';
+    cx.fillRect(x+1, y+1, sz-2, sz-2);
     cx.shadowBlur=0;
     return;
   }
   const p = PIECES[key];
   if(!p) return;
 
-  cx.shadowColor = p.col;
-  cx.shadowBlur  = 8;
+  const pad = 1;
+  const inner = sz - pad * 2;
 
-  // Gradient fill
-  const g = cx.createLinearGradient(x,y, x+sz,y+sz);
-  g.addColorStop(0, p.col);
-  g.addColorStop(1, p.shadow);
+  const g = cx.createLinearGradient(x, y, x+sz, y+sz);
+  g.addColorStop(0, p.col + 'EE');
+  g.addColorStop(0.55, p.col);
+  g.addColorStop(1, p.shadow + 'CC');
   cx.fillStyle = g;
-  cx.fillRect(x+1, y+1, sz-2, sz-2);
+  cx.fillRect(x+pad, y+pad, inner, inner);
 
+  cx.shadowColor = p.col;
+  cx.shadowBlur = 7;
+  cx.fillRect(x+pad, y+pad, inner, inner);
   cx.shadowBlur = 0;
 
-  // Top-left shine
-  cx.fillStyle = 'rgba(255,255,255,.18)';
-  cx.fillRect(x+2, y+2, sz-4, 3);
-  cx.fillRect(x+2, y+2, 3, sz-5);
+  cx.fillStyle = 'rgba(255,255,255,0.55)';
+  cx.fillRect(x+pad, y+pad, inner, 2);
+  cx.fillStyle = 'rgba(255,255,255,0.28)';
+  cx.fillRect(x+pad, y+pad+2, 2, inner-2);
 
-  // Dark bottom-right edge for 3D feel
-  cx.fillStyle = 'rgba(0,0,0,.25)';
-  cx.fillRect(x+1, y+sz-3, sz-2, 2);
-  cx.fillRect(x+sz-3, y+1, 2, sz-2);
+  cx.fillStyle = 'rgba(0,0,0,0.45)';
+  cx.fillRect(x+pad, y+sz-pad-2, inner, 2);
+  cx.fillRect(x+sz-pad-2, y+pad, 2, inner-2);
 
-  // Border
-  cx.strokeStyle = 'rgba(0,0,0,.4)';
-  cx.lineWidth = .5;
-  cx.strokeRect(x+.5, y+.5, sz-1, sz-1);
+  const shine = cx.createRadialGradient(x+pad+2, y+pad+2, 0, x+pad+4, y+pad+4, sz*0.5);
+  shine.addColorStop(0, 'rgba(255,255,255,0.38)');
+  shine.addColorStop(0.4, 'rgba(255,255,255,0.08)');
+  shine.addColorStop(1, 'rgba(255,255,255,0)');
+  cx.fillStyle = shine;
+  cx.fillRect(x+pad, y+pad, inner, inner);
+
+  cx.strokeStyle = 'rgba(0,0,0,0.35)';
+  cx.lineWidth = 0.5;
+  cx.strokeRect(x+pad+0.5, y+pad+0.5, inner-1, inner-1);
 }
 
 function renderNext(){
