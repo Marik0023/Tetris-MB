@@ -948,7 +948,7 @@ async function downloadResult(){
 
   cx.font='600 18px Nunito, sans-serif';
   cx.fillStyle='rgba(196,181,253,.78)';
-  cx.fillText('Player card', SX+54, SY+425);
+  cx.fillText('Arcade result', SX+54, SY+425);
 
   const stats=[
     ['SCORE', score.toLocaleString(), '#ffffff'],
@@ -1019,48 +1019,10 @@ async function downloadResult(){
   drawMiniStack(deckX+64, deckY+44);
   drawMiniStack(deckX+deckW-114, deckY+44);
 
-  const clusterY=deckY+186;
-  const labelY=deckY+350;
-  const buttonFace=(x,y,w,h,r,glow='rgba(124,58,237,.28)')=>{
-    cx.save();
-    cx.shadowColor=glow;
-    cx.shadowBlur=18;
-    const g=cx.createLinearGradient(x,y,x+w,y+h);
-    g.addColorStop(0,'rgba(74,30,146,.98)');
-    g.addColorStop(1,'rgba(25,9,57,.98)');
-    fillRound(x,y,w,h,r,g);
-    cx.restore();
-    strokeRound(x,y,w,h,r,'rgba(196,181,253,.32)',1.5);
-  };
+  const controlsY=deckY+214;
+  const labelsY=deckY+356;
 
-  const dCenterX=deckX+188;
-  const dCenterY=clusterY;
-  const dArm=54;
-  const dCorner=16;
-  buttonFace(dCenterX-dArm/2, dCenterY-92, dArm, 70, dCorner, 'rgba(176,110,255,.24)');
-  buttonFace(dCenterX-dArm/2, dCenterY+22, dArm, 70, dCorner, 'rgba(176,110,255,.24)');
-  buttonFace(dCenterX-92, dCenterY-dArm/2, 70, dArm, dCorner, 'rgba(176,110,255,.24)');
-  buttonFace(dCenterX+22, dCenterY-dArm/2, 70, dArm, dCorner, 'rgba(176,110,255,.24)');
-  cx.save();
-  cx.shadowColor='rgba(176,110,255,.34)';
-  cx.shadowBlur=14;
-  fillRound(dCenterX-32, dCenterY-32, 64, 64, 18, 'rgba(42,14,92,.98)');
-  cx.restore();
-  strokeRound(dCenterX-32, dCenterY-32, 64, 64, 18, 'rgba(196,181,253,.22)',1.3);
-
-  cx.font='900 24px Orbitron, sans-serif';
-  cx.fillStyle='rgba(244,244,255,.9)';
-  cx.textAlign='center';
-  cx.textBaseline='middle';
-  cx.fillText('▲', dCenterX, dCenterY-58);
-  cx.fillText('▼', dCenterX, dCenterY+58);
-  cx.fillText('◀', dCenterX-58, dCenterY+1);
-  cx.fillText('▶', dCenterX+58, dCenterY+1);
-  cx.textBaseline='alphabetic';
-
-  const midX=W/2;
-  const pillY=clusterY+16;
-  const drawMini=(x,y,w,h,label)=>{
+  const drawPill=(x,y,w,h,label)=>{
     cx.save();
     cx.shadowColor='rgba(124,58,237,.16)';
     cx.shadowBlur=10;
@@ -1077,40 +1039,78 @@ async function downloadResult(){
     cx.fillText(label, x+w/2, y+h/2+1);
     cx.textBaseline='alphabetic';
   };
-  drawMini(midX-150, pillY, 74, 28, 'SELECT');
-  drawMini(midX+76, pillY, 74, 28, 'START');
+
+  const drawDpadSquare=(x,y,size)=>{
+    cx.save();
+    cx.shadowColor='rgba(176,110,255,.24)';
+    cx.shadowBlur=16;
+    const g=cx.createLinearGradient(x,y,x+size,y+size);
+    g.addColorStop(0,'rgba(74,30,146,.98)');
+    g.addColorStop(1,'rgba(25,9,57,.98)');
+    fillRound(x,y,size,size,16,g);
+    cx.restore();
+    strokeRound(x,y,size,size,16,'rgba(196,181,253,.30)',1.4);
+  };
+
+  const dCenterX=deckX+196;
+  const dCenterY=controlsY;
+  const dSize=62;
+  const dGap=4;
+  drawDpadSquare(dCenterX-dSize/2, dCenterY-dSize/2, dSize);
+  drawDpadSquare(dCenterX-dSize/2, dCenterY-(dSize*1.5)-dGap, dSize);
+  drawDpadSquare(dCenterX-dSize/2, dCenterY+(dSize/2)+dGap, dSize);
+  drawDpadSquare(dCenterX-(dSize*1.5)-dGap, dCenterY-dSize/2, dSize);
+  drawDpadSquare(dCenterX+(dSize/2)+dGap, dCenterY-dSize/2, dSize);
+
+  cx.font='900 24px Orbitron, sans-serif';
+  cx.fillStyle='rgba(244,244,255,.92)';
+  cx.textAlign='center';
+  cx.textBaseline='middle';
+  cx.fillText('▲', dCenterX, dCenterY-dSize-4);
+  cx.fillText('▼', dCenterX, dCenterY+dSize+4);
+  cx.fillText('◀', dCenterX-dSize-4, dCenterY+1);
+  cx.fillText('▶', dCenterX+dSize+4, dCenterY+1);
+  cx.textBaseline='alphabetic';
+
+  const midX=W/2;
+  const homeY=controlsY;
+  const pillW=86, pillH=28;
+  const selectX=midX-145;
+  const startX=midX+59;
+  drawPill(selectX, homeY-pillH/2, pillW, pillH, 'SELECT');
+  drawPill(startX, homeY-pillH/2, pillW, pillH, 'START');
 
   cx.save();
   cx.shadowColor='rgba(176,110,255,.42)';
   cx.shadowBlur=22;
-  const homeGrad=cx.createRadialGradient(midX, clusterY+6, 0, midX, clusterY+6, 54);
+  const homeGrad=cx.createRadialGradient(midX, homeY, 0, midX, homeY, 54);
   homeGrad.addColorStop(0,'rgba(170,95,255,.96)');
   homeGrad.addColorStop(1,'rgba(28,10,60,.98)');
   cx.fillStyle=homeGrad;
   cx.beginPath();
-  cx.arc(midX, clusterY+6, 48, 0, Math.PI*2);
+  cx.arc(midX, homeY, 48, 0, Math.PI*2);
   cx.fill();
   cx.restore();
   cx.strokeStyle='rgba(230,220,255,.42)';
   cx.lineWidth=2;
   cx.beginPath();
-  cx.arc(midX, clusterY+6, 48, 0, Math.PI*2);
+  cx.arc(midX, homeY, 48, 0, Math.PI*2);
   cx.stroke();
   cx.fillStyle='#f5ecff';
   cx.font='900 26px Orbitron, sans-serif';
   cx.textAlign='center';
   cx.textBaseline='middle';
-  cx.fillText('•', midX, clusterY+7);
+  cx.fillText('•', midX, homeY+1);
   cx.textBaseline='alphabetic';
 
-  const actionCX=deckX+deckW-180;
-  const actionCY=clusterY+6;
-  const br=42;
+  const actionCX=deckX+deckW-164;
+  const actionCY=controlsY;
+  const br=39;
   const buttons=[
-    ['A', actionCX+44, actionCY-54, '#22eeff'],
-    ['B', actionCX+100, actionCY, '#ff3ea5'],
-    ['X', actionCX-12, actionCY, '#7c3aed'],
-    ['Y', actionCX+44, actionCY+54, '#ffd700']
+    ['A', actionCX+42, actionCY-52, '#22eeff'],
+    ['B', actionCX+98, actionCY+4, '#ff3ea5'],
+    ['X', actionCX-14, actionCY+4, '#7c3aed'],
+    ['Y', actionCX+42, actionCY+60, '#ffd700']
   ];
   buttons.forEach(([label,x,y,color])=>{
     cx.save();
@@ -1149,11 +1149,11 @@ async function downloadResult(){
   cx.font='800 16px Orbitron, sans-serif';
   cx.fillStyle='rgba(196,181,253,.74)';
   cx.textAlign='center';
-  cx.fillText('MOVE', dCenterX, labelY);
-  cx.fillText('SELECT', midX-112, labelY);
-  cx.fillText('HOME', midX, labelY);
-  cx.fillText('START', midX+112, labelY);
-  cx.fillText('DROP / ROTATE', actionCX+44, labelY);
+  cx.fillText('MOVE', dCenterX, labelsY);
+  cx.fillText('SELECT', selectX+pillW/2, labelsY);
+  cx.fillText('HOME', midX, labelsY);
+  cx.fillText('START', startX+pillW/2, labelsY);
+  cx.fillText('DROP / ROTATE', actionCX+42, labelsY);
 
   const speaker = (xStart, yStart) => {
     for(let row=0; row<4; row++){
