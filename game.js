@@ -948,7 +948,7 @@ async function downloadResult(){
 
   cx.font='600 18px Nunito, sans-serif';
   cx.fillStyle='rgba(196,181,253,.78)';
-  cx.fillText('magic-tetris.game', SX+54, SY+425);
+  cx.fillText('Player card', SX+54, SY+425);
 
   const stats=[
     ['SCORE', score.toLocaleString(), '#ffffff'],
@@ -989,141 +989,128 @@ async function downloadResult(){
   const CY=SY+SH+44;
   const deckX=SX-4, deckY=CY, deckW=SW+8, deckH=424;
   const deckGrad=cx.createLinearGradient(deckX,deckY,deckX,deckY+deckH);
-  deckGrad.addColorStop(0,'rgba(24,8,58,.92)');
-  deckGrad.addColorStop(1,'rgba(13,4,34,.88)');
+  deckGrad.addColorStop(0,'rgba(23,8,56,.94)');
+  deckGrad.addColorStop(1,'rgba(12,4,31,.90)');
   fillRound(deckX,deckY,deckW,deckH,34,deckGrad);
   strokeRound(deckX,deckY,deckW,deckH,34,'rgba(124,58,237,.24)',2);
-  fillRound(deckX+14,deckY+16,deckW-28,deckH-32,28,'rgba(255,255,255,.012)');
+  fillRound(deckX+14,deckY+16,deckW-28,deckH-32,28,'rgba(255,255,255,.014)');
 
   cx.save();
   cx.shadowColor='rgba(34,238,255,.08)';
-  cx.shadowBlur=26;
-  cx.strokeStyle='rgba(34,238,255,.12)';
-  cx.lineWidth=1.5;
+  cx.shadowBlur=18;
+  cx.strokeStyle='rgba(34,238,255,.10)';
+  cx.lineWidth=1.4;
   cx.beginPath();
-  cx.moveTo(deckX+34,deckY+20);
-  cx.lineTo(deckX+deckW-34,deckY+20);
+  cx.moveTo(deckX+38,deckY+22);
+  cx.lineTo(deckX+deckW-38,deckY+22);
   cx.stroke();
   cx.restore();
 
-  const decoPairs=[
-    [deckX+56, deckY+42],
-    [deckX+deckW-116, deckY+42],
-    [deckX+56, deckY+108],
-    [deckX+deckW-116, deckY+108]
-  ];
-  cx.save();
-  cx.globalAlpha=.14;
-  const patternColors=['#22eeff','#ff3ea5','#7c3aed','#ffd700'];
-  decoPairs.forEach(([px,py], idx)=>{
-    fillRound(px,py,24,24,6,patternColors[idx%patternColors.length]);
-    fillRound(px+28,py,24,24,6,patternColors[(idx+1)%patternColors.length]);
-    fillRound(px,py+28,24,24,6,patternColors[(idx+2)%patternColors.length]);
-    fillRound(px+28,py+28,24,24,6,patternColors[(idx+3)%patternColors.length]);
-  });
-  cx.restore();
+  const decoCols=['#22eeff','#ff3ea5','#7c3aed','#ffd700'];
+  const drawMiniStack=(x,y)=>{
+    cx.save();
+    cx.globalAlpha=.18;
+    decoCols.forEach((color,i)=>{
+      const dx=i%2, dy=Math.floor(i/2);
+      fillRound(x+dx*28,y+dy*28,22,22,6,color);
+    });
+    cx.restore();
+  };
+  drawMiniStack(deckX+64, deckY+44);
+  drawMiniStack(deckX+deckW-114, deckY+44);
 
-  const dividerY=deckY+308;
-  cx.save();
-  cx.strokeStyle='rgba(196,181,253,.10)';
-  cx.lineWidth=1;
-  cx.beginPath();
-  cx.moveTo(deckX+40, dividerY);
-  cx.lineTo(deckX+deckW-40, dividerY);
-  cx.stroke();
-  cx.restore();
-
-  const centerY=deckY+192;
-
-  const dSize=56;
-  const dGap=4;
-  const dCenterX=deckX+202;
+  const clusterY=deckY+186;
+  const labelY=deckY+350;
   const buttonFace=(x,y,w,h,r,glow='rgba(124,58,237,.28)')=>{
     cx.save();
     cx.shadowColor=glow;
     cx.shadowBlur=18;
     const g=cx.createLinearGradient(x,y,x+w,y+h);
-    g.addColorStop(0,'rgba(70,28,140,.96)');
-    g.addColorStop(1,'rgba(24,8,58,.96)');
+    g.addColorStop(0,'rgba(74,30,146,.98)');
+    g.addColorStop(1,'rgba(25,9,57,.98)');
     fillRound(x,y,w,h,r,g);
     cx.restore();
-    strokeRound(x,y,w,h,r,'rgba(196,181,253,.34)',1.6);
+    strokeRound(x,y,w,h,r,'rgba(196,181,253,.32)',1.5);
   };
 
-  buttonFace(dCenterX, centerY-(dSize*2+dGap)/2, dSize, dSize, 14);
-  buttonFace(dCenterX, centerY+(dGap)/2, dSize, dSize, 14);
-  buttonFace(dCenterX-(dSize+dGap), centerY-dSize/2, dSize, dSize, 14);
-  buttonFace(dCenterX+(dSize+dGap), centerY-dSize/2, dSize, dSize, 14);
+  const dCenterX=deckX+188;
+  const dCenterY=clusterY;
+  const dArm=54;
+  const dCorner=16;
+  buttonFace(dCenterX-dArm/2, dCenterY-92, dArm, 70, dCorner, 'rgba(176,110,255,.24)');
+  buttonFace(dCenterX-dArm/2, dCenterY+22, dArm, 70, dCorner, 'rgba(176,110,255,.24)');
+  buttonFace(dCenterX-92, dCenterY-dArm/2, 70, dArm, dCorner, 'rgba(176,110,255,.24)');
+  buttonFace(dCenterX+22, dCenterY-dArm/2, 70, dArm, dCorner, 'rgba(176,110,255,.24)');
   cx.save();
-  cx.shadowColor='rgba(176,110,255,.32)';
+  cx.shadowColor='rgba(176,110,255,.34)';
   cx.shadowBlur=14;
-  fillRound(dCenterX, centerY-dSize/2, dSize, dSize, 14, 'rgba(42,14,92,.96)');
+  fillRound(dCenterX-32, dCenterY-32, 64, 64, 18, 'rgba(42,14,92,.98)');
   cx.restore();
-  strokeRound(dCenterX, centerY-dSize/2, dSize, dSize, 14, 'rgba(196,181,253,.22)',1.3);
+  strokeRound(dCenterX-32, dCenterY-32, 64, 64, 18, 'rgba(196,181,253,.22)',1.3);
 
   cx.font='900 24px Orbitron, sans-serif';
-  cx.fillStyle='rgba(244,244,255,.92)';
+  cx.fillStyle='rgba(244,244,255,.9)';
   cx.textAlign='center';
   cx.textBaseline='middle';
-  cx.fillText('▲', dCenterX+dSize/2, centerY-dSize/2-dGap/2);
-  cx.fillText('▼', dCenterX+dSize/2, centerY+dSize+dGap/2);
-  cx.fillText('◀', dCenterX-dGap/2, centerY+dSize/2);
-  cx.fillText('▶', dCenterX+dSize+dGap/2, centerY+dSize/2);
+  cx.fillText('▲', dCenterX, dCenterY-58);
+  cx.fillText('▼', dCenterX, dCenterY+58);
+  cx.fillText('◀', dCenterX-58, dCenterY+1);
+  cx.fillText('▶', dCenterX+58, dCenterY+1);
   cx.textBaseline='alphabetic';
 
   const midX=W/2;
-  const miniY=centerY+10;
+  const pillY=clusterY+16;
   const drawMini=(x,y,w,h,label)=>{
     cx.save();
     cx.shadowColor='rgba(124,58,237,.16)';
     cx.shadowBlur=10;
     const g=cx.createLinearGradient(x,y,x+w,y+h);
-    g.addColorStop(0,'rgba(55,20,110,.95)');
-    g.addColorStop(1,'rgba(22,8,52,.95)');
+    g.addColorStop(0,'rgba(57,20,113,.96)');
+    g.addColorStop(1,'rgba(22,8,52,.96)');
     fillRound(x,y,w,h,h/2,g);
     cx.restore();
     strokeRound(x,y,w,h,h/2,'rgba(196,181,253,.24)',1.4);
     cx.font='900 13px Orbitron, sans-serif';
-    cx.fillStyle='rgba(210,190,255,.82)';
+    cx.fillStyle='rgba(222,205,255,.82)';
     cx.textAlign='center';
     cx.textBaseline='middle';
     cx.fillText(label, x+w/2, y+h/2+1);
     cx.textBaseline='alphabetic';
   };
-  drawMini(midX-116, miniY, 66, 26, 'SEL');
-  drawMini(midX+50, miniY, 66, 26, 'STA');
+  drawMini(midX-150, pillY, 74, 28, 'SELECT');
+  drawMini(midX+76, pillY, 74, 28, 'START');
 
   cx.save();
   cx.shadowColor='rgba(176,110,255,.42)';
-  cx.shadowBlur=20;
-  const homeGrad=cx.createRadialGradient(midX, centerY+8, 0, midX, centerY+8, 48);
-  homeGrad.addColorStop(0,'rgba(170,95,255,.95)');
-  homeGrad.addColorStop(1,'rgba(28,10,60,.96)');
+  cx.shadowBlur=22;
+  const homeGrad=cx.createRadialGradient(midX, clusterY+6, 0, midX, clusterY+6, 54);
+  homeGrad.addColorStop(0,'rgba(170,95,255,.96)');
+  homeGrad.addColorStop(1,'rgba(28,10,60,.98)');
   cx.fillStyle=homeGrad;
   cx.beginPath();
-  cx.arc(midX, centerY+8, 44, 0, Math.PI*2);
+  cx.arc(midX, clusterY+6, 48, 0, Math.PI*2);
   cx.fill();
   cx.restore();
   cx.strokeStyle='rgba(230,220,255,.42)';
   cx.lineWidth=2;
   cx.beginPath();
-  cx.arc(midX, centerY+8, 44, 0, Math.PI*2);
+  cx.arc(midX, clusterY+6, 48, 0, Math.PI*2);
   cx.stroke();
   cx.fillStyle='#f5ecff';
-  cx.font='900 24px Orbitron, sans-serif';
+  cx.font='900 26px Orbitron, sans-serif';
   cx.textAlign='center';
   cx.textBaseline='middle';
-  cx.fillText('•', midX, centerY+8);
+  cx.fillText('•', midX, clusterY+7);
   cx.textBaseline='alphabetic';
 
-  const actionCX=deckX+deckW-188;
-  const actionCY=centerY+6;
+  const actionCX=deckX+deckW-180;
+  const actionCY=clusterY+6;
   const br=42;
   const buttons=[
-    ['A', actionCX+52, actionCY-44, '#22eeff'],
-    ['B', actionCX+108, actionCY+6, '#ff3ea5'],
-    ['X', actionCX-4, actionCY+6, '#7c3aed'],
-    ['Y', actionCX+52, actionCY+58, '#ffd700']
+    ['A', actionCX+44, actionCY-54, '#22eeff'],
+    ['B', actionCX+100, actionCY, '#ff3ea5'],
+    ['X', actionCX-12, actionCY, '#7c3aed'],
+    ['Y', actionCX+44, actionCY+54, '#ffd700']
   ];
   buttons.forEach(([label,x,y,color])=>{
     cx.save();
@@ -1150,14 +1137,23 @@ async function downloadResult(){
     cx.textBaseline='alphabetic';
   });
 
+  cx.save();
+  cx.strokeStyle='rgba(196,181,253,.10)';
+  cx.lineWidth=1;
+  cx.beginPath();
+  cx.moveTo(deckX+44, deckY+302);
+  cx.lineTo(deckX+deckW-44, deckY+302);
+  cx.stroke();
+  cx.restore();
+
   cx.font='800 16px Orbitron, sans-serif';
   cx.fillStyle='rgba(196,181,253,.74)';
   cx.textAlign='center';
-  cx.fillText('MOVE', dCenterX+dSize/2, deckY+360);
-  cx.fillText('SELECT', midX-84, deckY+360);
-  cx.fillText('HOME', midX, deckY+360);
-  cx.fillText('START', midX+84, deckY+360);
-  cx.fillText('DROP / ROTATE', actionCX+52, deckY+360);
+  cx.fillText('MOVE', dCenterX, labelY);
+  cx.fillText('SELECT', midX-112, labelY);
+  cx.fillText('HOME', midX, labelY);
+  cx.fillText('START', midX+112, labelY);
+  cx.fillText('DROP / ROTATE', actionCX+44, labelY);
 
   const speaker = (xStart, yStart) => {
     for(let row=0; row<4; row++){
