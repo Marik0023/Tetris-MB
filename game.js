@@ -887,29 +887,62 @@ function downloadResult(){
   cx.fillStyle='#030308';
   rr(0,0,W,H,20); cx.fill();
 
+  // ── Animated bg tetrominos (drawn statically at random positions) ──
+  cx.save();
+  const BG_SHAPES=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0],[1,0],[1,1]],[[0,1,1],[1,1,0]]];
+  const BG_COLS=['#00F5D4','#9B72FF','#FFC700','#FF3A5C','#3D8EFF','#00E878'];
+  const rng=(min,max)=>min+Math.random()*(max-min);
+  // Use a seeded-ish layout — deterministic so it looks designed
+  const bgPieces=[
+    {sh:BG_SHAPES[0],col:BG_COLS[0],x:28,  y:60,  rot:0.3,  sz:9, a:0.055},
+    {sh:BG_SHAPES[2],col:BG_COLS[1],x:390, y:40,  rot:-0.5, sz:10,a:0.06},
+    {sh:BG_SHAPES[4],col:BG_COLS[2],x:420, y:200, rot:0.8,  sz:8, a:0.05},
+    {sh:BG_SHAPES[1],col:BG_COLS[3],x:30,  y:320, rot:0.4,  sz:10,a:0.055},
+    {sh:BG_SHAPES[3],col:BG_COLS[4],x:420, y:400, rot:-0.3, sz:9, a:0.045},
+    {sh:BG_SHAPES[0],col:BG_COLS[5],x:50,  y:500, rot:0.6,  sz:8, a:0.04},
+    {sh:BG_SHAPES[2],col:BG_COLS[0],x:370, y:530, rot:-0.7, sz:9, a:0.05},
+    {sh:BG_SHAPES[4],col:BG_COLS[1],x:200, y:20,  rot:1.1,  sz:7, a:0.035},
+    {sh:BG_SHAPES[3],col:BG_COLS[2],x:240, y:550, rot:-0.4, sz:8, a:0.04},
+  ];
+  bgPieces.forEach(p=>{
+    cx.save();
+    cx.globalAlpha=p.a;
+    cx.translate(p.x,p.y); cx.rotate(p.rot);
+    p.sh.forEach((row,r)=>row.forEach((v,c)=>{
+      if(!v) return;
+      const bx=(c-p.sh[0].length/2)*(p.sz+1.5);
+      const by=(r-p.sh.length/2)*(p.sz+1.5);
+      cx.strokeStyle=p.col; cx.lineWidth=0.9;
+      cx.strokeRect(bx,by,p.sz,p.sz);
+      cx.fillStyle=p.col+'22'; cx.fillRect(bx,by,p.sz,p.sz);
+    }));
+    cx.restore();
+  });
+  cx.restore();
+
   // Subtle radial glow top-center
-  const topGlow=cx.createRadialGradient(W/2,0,0,W/2,0,W*0.7);
-  topGlow.addColorStop(0,'rgba(0,245,212,0.07)');
+  const topGlow=cx.createRadialGradient(W/2,0,0,W/2,0,W*0.75);
+  topGlow.addColorStop(0,'rgba(0,245,212,0.1)');
   topGlow.addColorStop(1,'rgba(0,0,0,0)');
   cx.fillStyle=topGlow; rr(0,0,W,H,20); cx.fill();
 
   // Bottom-right violet glow
-  const btGlow=cx.createRadialGradient(W,H,0,W,H,W*0.6);
-  btGlow.addColorStop(0,'rgba(155,114,255,0.055)');
+  const btGlow=cx.createRadialGradient(W,H,0,W,H,W*0.65);
+  btGlow.addColorStop(0,'rgba(155,114,255,0.08)');
   btGlow.addColorStop(1,'rgba(0,0,0,0)');
   cx.fillStyle=btGlow; rr(0,0,W,H,20); cx.fill();
 
   // ── Outer border ──
   cx.save();
-  cx.shadowColor='rgba(0,245,212,0.3)'; cx.shadowBlur=16;
-  cx.strokeStyle='rgba(0,245,212,0.45)'; cx.lineWidth=1.5;
+  cx.shadowColor='rgba(0,245,212,0.35)'; cx.shadowBlur=18;
+  cx.strokeStyle='rgba(0,245,212,0.5)'; cx.lineWidth=1.5;
   rr(0.75,0.75,W-1.5,H-1.5,20); cx.stroke();
   cx.restore();
 
   // Top accent line
   const topLine=cx.createLinearGradient(60,0,W-60,0);
   topLine.addColorStop(0,'transparent');
-  topLine.addColorStop(0.5,'rgba(0,245,212,0.7)');
+  topLine.addColorStop(0.5,'rgba(0,245,212,0.75)');
   topLine.addColorStop(1,'transparent');
   cx.strokeStyle=topLine; cx.lineWidth=1.5;
   cx.beginPath(); cx.moveTo(60,1); cx.lineTo(W-60,1); cx.stroke();
@@ -917,20 +950,20 @@ function downloadResult(){
   // Bottom violet accent
   const btLine=cx.createLinearGradient(80,0,W-80,0);
   btLine.addColorStop(0,'transparent');
-  btLine.addColorStop(0.5,'rgba(155,114,255,0.5)');
+  btLine.addColorStop(0.5,'rgba(155,114,255,0.55)');
   btLine.addColorStop(1,'transparent');
   cx.strokeStyle=btLine; cx.lineWidth=1;
   cx.beginPath(); cx.moveTo(80,H-1); cx.lineTo(W-80,H-1); cx.stroke();
 
   // Corner brackets
-  const brkCol='rgba(0,245,212,0.35)';
+  const brkCol='rgba(0,245,212,0.38)';
   cx.strokeStyle=brkCol; cx.lineWidth=1.5;
   [[8,8,1],[W-8,8,-1],[8,H-8,1],[W-8,H-8,-1]].forEach(([bx,by,d])=>{
     cx.beginPath(); cx.moveTo(bx,by+d*18); cx.lineTo(bx,by); cx.lineTo(bx+d*18,by); cx.stroke();
   });
 
   // ── Subtle grid ──
-  cx.save(); cx.globalAlpha=0.025;
+  cx.save(); cx.globalAlpha=0.022;
   cx.strokeStyle='#00F5D4'; cx.lineWidth=0.5;
   for(let x=0;x<W;x+=32) { cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke(); }
   for(let y=0;y<H;y+=32) { cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke(); }
@@ -940,11 +973,11 @@ function downloadResult(){
   function drawContent(logoImg){
     // Logo
     if(logoImg){
-      const lH2=46, scale=lH2/logoImg.naturalHeight;
+      const lH2=82, scale=lH2/logoImg.naturalHeight;
       const lW2=Math.round(logoImg.naturalWidth*scale);
       cx.save();
-      cx.shadowColor='rgba(0,245,212,0.4)'; cx.shadowBlur=20;
-      cx.drawImage(logoImg, Math.round((W-lW2)/2), 22, lW2, lH2);
+      cx.shadowColor='rgba(0,245,212,0.5)'; cx.shadowBlur=24;
+      cx.drawImage(logoImg, Math.round((W-lW2)/2), 16, lW2, lH2);
       cx.restore();
     } else {
       cx.save();
@@ -962,7 +995,7 @@ function downloadResult(){
       cx.fillStyle=c;
       cx.globalAlpha=0.6;
       cx.beginPath();
-      cx.arc(W/2+(i-2)*14, 78, 2, 0, Math.PI*2);
+      cx.arc(W/2+(i-2)*14, 106, 2, 0, Math.PI*2);
       cx.fill();
     });
     cx.globalAlpha=1;
@@ -974,7 +1007,7 @@ function downloadResult(){
     cx.shadowColor='rgba(255,58,92,0.5)'; cx.shadowBlur=20;
     cx.fillStyle='#FF3A5C';
     cx.textAlign='center';
-    cx.fillText('GAME OVER', W/2, 112);
+    cx.fillText('GAME OVER', W/2, 140);
     cx.restore();
 
     // Rank
@@ -984,13 +1017,12 @@ function downloadResult(){
     cx.fillStyle='#FFC700';
     cx.shadowColor='rgba(255,199,0,0.5)'; cx.shadowBlur=10;
     cx.textAlign='center';
-    cx.fillText(rnkTxt, W/2, 130);
+    cx.fillText(rnkTxt, W/2, 158);
     cx.restore();
 
     // ── Avatar circle ──
-    const avX=W/2, avY=196, avR=38;
+    const avX=W/2, avY=220, avR=38;
     cx.save();
-    // Outer glow ring
     cx.shadowColor='rgba(0,245,212,0.5)'; cx.shadowBlur=24;
     cx.strokeStyle='rgba(0,245,212,0.7)'; cx.lineWidth=2;
     cx.beginPath(); cx.arc(avX,avY,avR+2,0,Math.PI*2); cx.stroke();
@@ -1016,7 +1048,7 @@ function downloadResult(){
       cx.font='bold 13px "JetBrains Mono",monospace';
       cx.fillStyle='#EDEAF8';
       cx.textAlign='center';
-      cx.fillText(P.name||'Wizard', W/2, 253);
+      cx.fillText(P.name||'Wizard', W/2, 278);
 
       // ── Stats grid 2×2 ──
       const stats=[
@@ -1025,7 +1057,7 @@ function downloadResult(){
         {label:'LINES', val:String(lines),  col:'#9B72FF'},
         {label:'LEVEL', val:String(level),  col:'#00F5D4'},
       ];
-      const gx=40, gy=272, gw=(W-80-10)/2, gh=72, gGap=10;
+      const gx=40, gy=296, gw=(W-80-10)/2, gh=72, gGap=10;
       stats.forEach((st,i)=>{
         const col=i%2, row=Math.floor(i/2);
         const bx=gx+col*(gw+gGap), by=gy+row*(gh+gGap);
