@@ -807,6 +807,22 @@ function downloadResult(){
   ov.addColorStop(1,'rgba(255,60,165,.06)');
   cx.fillStyle=ov; rr(2,2,W-4,H-4,35); cx.fill();
 
+  // Ambient glows to avoid empty space in the lower half
+  [
+    {x:92,y:520,r:120,c:'rgba(124,58,237,.16)'},
+    {x:280,y:520,r:138,c:'rgba(176,110,255,.12)'},
+    {x:468,y:520,r:118,c:'rgba(34,238,255,.12)'}
+  ].forEach(g=>{
+    const rg=cx.createRadialGradient(g.x,g.y,0,g.x,g.y,g.r);
+    rg.addColorStop(0,g.c);
+    rg.addColorStop(.45,g.c.replace('.12','.06').replace('.16','.08'));
+    rg.addColorStop(1,'rgba(0,0,0,0)');
+    cx.fillStyle=rg;
+    cx.beginPath();
+    cx.arc(g.x,g.y,g.r,0,Math.PI*2);
+    cx.fill();
+  });
+
   /* ══ SHOULDER BUTTONS ══ */
   cx.fillStyle='rgba(80,28,165,.55)';
   cx.strokeStyle='rgba(176,110,255,.42)'; cx.lineWidth=2;
@@ -822,8 +838,6 @@ function downloadResult(){
   cx.closePath(); cx.fill(); cx.stroke();
 
   /* ══ LOGO SECTION ══ */
-  // Logo image will be drawn after load (deferred via drawWithLogo)
-  // Tetris block accents flanking
   const blkPalette=['#7C3AED','#FF3EA5','#22EEFF','#FFD700','#c084fc'];
   const blkSz=9;
   [[16,48],[16,59],[27,48],[16,70],[27,59]].forEach(([bx,by],i)=>{
@@ -846,24 +860,20 @@ function downloadResult(){
   cx.strokeStyle='rgba(90,38,160,.6)'; cx.lineWidth=2;
   rr(SX-10,SY-10,SW+20,SH+20,18); cx.stroke();
 
-  // Screen surface
   const scrBg=cx.createLinearGradient(SX,SY,SX,SY+SH);
   scrBg.addColorStop(0,'#070215'); scrBg.addColorStop(1,'#020010');
   cx.fillStyle=scrBg; rr(SX,SY,SW,SH,10); cx.fill();
 
-  // Inner rim glow
   cx.save();
   cx.shadowColor='rgba(34,238,255,.15)'; cx.shadowBlur=28;
   cx.strokeStyle='rgba(34,238,255,.12)'; cx.lineWidth=1;
   rr(SX,SY,SW,SH,10); cx.stroke();
   cx.restore();
 
-  // Scanlines
   cx.save(); cx.globalAlpha=.022;
   for(let y=SY;y<SY+SH;y+=4){ cx.fillStyle='#fff'; cx.fillRect(SX,y,SW,1); }
   cx.restore();
 
-  // Top shine inside screen
   const shine=cx.createLinearGradient(SX+40,0,SX+SW-40,0);
   shine.addColorStop(0,'transparent');
   shine.addColorStop(.5,'rgba(180,120,255,.65)');
@@ -891,17 +901,39 @@ function downloadResult(){
   cx.fillText(rnkTxt, W/2, SY+58);
   cx.restore();
 
-  /* Avatar + stats */
   const avSrc=P.avatar;
   const avX=SX+52, avY=SY+160, avR=40;
 
+  function drawGlowPill(x,y,w,h,c1,c2,a=.18){
+    const g=cx.createLinearGradient(x,y,x+w,y+h);
+    g.addColorStop(0,c1.replace(')',`,`+a+')').replace('rgb','rgba'));
+    g.addColorStop(1,c2.replace(')',`,`+(a*.55)+')').replace('rgb','rgba'));
+    cx.fillStyle=g;
+    rr(x,y,w,h,h/2); cx.fill();
+  }
+
+  function drawLegendGroup(title,x,y,w){
+    cx.save();
+    cx.font='700 10px Nunito,sans-serif';
+    cx.textAlign='center';
+    const titleG=cx.createLinearGradient(x,0,x+w,0);
+    titleG.addColorStop(0,'rgba(176,110,255,.2)');
+    titleG.addColorStop(.5,'rgba(255,255,255,.9)');
+    titleG.addColorStop(1,'rgba(34,238,255,.2)');
+    cx.fillStyle='rgba(22,8,50,.72)';
+    rr(x,y,w,22,11); cx.fill();
+    cx.strokeStyle='rgba(176,110,255,.25)'; cx.lineWidth=1;
+    rr(x,y,w,22,11); cx.stroke();
+    cx.fillStyle=titleG;
+    cx.fillText(title, x+w/2, y+15);
+    cx.restore();
+  }
+
   function drawStats(){
-    // Player name
     cx.font='bold 13px Orbitron,monospace';
     cx.fillStyle='#e2d9f3'; cx.textAlign='left';
     cx.fillText(P.name||'Wizard', SX+110, SY+88);
 
-    // 2×2 stats grid
     const stats=[
       {label:'SCORE',val:score.toLocaleString(),color:'#e2d9f3'},
       {label:'BEST', val:P.best.toLocaleString(),color:'#FFD700'},
@@ -927,7 +959,6 @@ function downloadResult(){
       cx.restore();
     });
 
-    // Screen footer
     const now=new Date();
     const ds=now.toLocaleDateString('en-US',{day:'2-digit',month:'2-digit',year:'numeric'});
     cx.font='600 9px Nunito,sans-serif';
@@ -939,8 +970,8 @@ function downloadResult(){
 
     /* ══ CONTROLS SECTION ══ */
     const cY=SY+SH+12;
+    const panelX=14, panelY=cY+8, panelW=W-28, panelH=H-cY-22;
 
-    // Separator with glow
     cx.save();
     const sepG=cx.createLinearGradient(20,0,W-20,0);
     sepG.addColorStop(0,'transparent');
@@ -952,16 +983,13 @@ function downloadResult(){
     cx.beginPath(); cx.moveTo(20,cY); cx.lineTo(W-20,cY); cx.stroke();
     cx.restore();
 
-    // Controls background panel
     cx.save();
-    cx.fillStyle='rgba(30,8,70,.35)';
-    rr(14,cY+8,W-28,H-cY-22,16); cx.fill();
-    cx.strokeStyle='rgba(100,50,200,.2)'; cx.lineWidth=1;
-    rr(14,cY+8,W-28,H-cY-22,16); cx.stroke();
+    cx.fillStyle='rgba(30,8,70,.38)';
+    rr(panelX,panelY,panelW,panelH,16); cx.fill();
+    cx.strokeStyle='rgba(100,50,200,.22)'; cx.lineWidth=1;
+    rr(panelX,panelY,panelW,panelH,16); cx.stroke();
     cx.restore();
 
-    // Horizontal light strip accent
-    cx.save();
     const stripG=cx.createLinearGradient(30,0,W-30,0);
     stripG.addColorStop(0,'transparent');
     stripG.addColorStop(.2,'rgba(124,58,237,.15)');
@@ -970,102 +998,138 @@ function downloadResult(){
     stripG.addColorStop(1,'transparent');
     cx.fillStyle=stripG;
     cx.fillRect(30,cY+16,W-60,3);
-    cx.restore();
+
+    // Group glows + titles
+    drawLegendGroup('MOVE', 36, cY+28, 108);
+    drawLegendGroup('SYSTEM', W/2-58, cY+28, 116);
+    drawLegendGroup('ACTIONS', W-144, cY+28, 108);
 
     /* D-pad */
-    const dpCX=90, dpCY=cY+72, dpS=22;
+    const dpCX=92, dpCY=cY+122, dpS=32;
     cx.save();
-    cx.shadowColor='rgba(124,58,237,.6)'; cx.shadowBlur=18;
+    cx.shadowColor='rgba(124,58,237,.7)'; cx.shadowBlur=26;
     [
       [dpCX-dpS/2, dpCY-dpS*1.5, dpS, dpS],
       [dpCX-dpS/2, dpCY+dpS/2,   dpS, dpS],
       [dpCX-dpS*1.5,dpCY-dpS/2,  dpS, dpS],
       [dpCX+dpS/2, dpCY-dpS/2,   dpS, dpS],
       [dpCX-dpS/2, dpCY-dpS/2,   dpS, dpS],
-    ].forEach(([dx,dy,dw,dh])=>{
+    ].forEach(([dx,dy,dw,dh],idx)=>{
       const btnG=cx.createLinearGradient(dx,dy,dx+dw,dy+dh);
-      btnG.addColorStop(0,'rgba(60,20,120,.95)');
-      btnG.addColorStop(1,'rgba(25,5,70,.95)');
+      btnG.addColorStop(0,'rgba(72,26,146,.98)');
+      btnG.addColorStop(1,'rgba(22,5,66,.98)');
       cx.fillStyle=btnG;
-      rr(dx,dy,dw,dh,5); cx.fill();
-      cx.strokeStyle='rgba(176,110,255,.5)'; cx.lineWidth=1.5;
-      rr(dx,dy,dw,dh,5); cx.stroke();
+      rr(dx,dy,dw,dh,7); cx.fill();
+      cx.strokeStyle=idx===4?'rgba(255,255,255,.24)':'rgba(176,110,255,.62)';
+      cx.lineWidth=2;
+      rr(dx,dy,dw,dh,7); cx.stroke();
     });
     cx.restore();
-    cx.font='bold 10px sans-serif';
-    cx.fillStyle='rgba(200,160,255,.8)'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.font='bold 16px sans-serif';
+    cx.fillStyle='rgba(220,190,255,.92)'; cx.textAlign='center'; cx.textBaseline='middle';
     cx.fillText('▲',dpCX,dpCY-dpS);
     cx.fillText('▼',dpCX,dpCY+dpS);
     cx.fillText('◀',dpCX-dpS,dpCY);
     cx.fillText('▶',dpCX+dpS,dpCY);
     cx.textBaseline='alphabetic';
-    cx.font='600 8px Nunito,sans-serif';
-    cx.fillStyle='rgba(140,100,200,.6)';
-    cx.fillText('D-PAD',dpCX,dpCY+dpS*1.6+10);
+    cx.font='700 11px Nunito,sans-serif';
+    cx.fillStyle='rgba(180,140,255,.9)';
+    cx.fillText('D-PAD',dpCX,dpCY+78);
+    cx.font='600 9px Nunito,sans-serif';
+    cx.fillStyle='rgba(150,120,215,.72)';
+    cx.fillText('Move pieces',dpCX,dpCY+94);
 
     /* Center: SELECT / HOME / START */
-    const cbY=cY+64;
-    // Home button glow ring
+    const cbY=cY+122;
     cx.save();
-    cx.shadowColor='rgba(176,110,255,.7)'; cx.shadowBlur=20;
-    cx.fillStyle='rgba(70,20,150,.9)';
-    cx.beginPath(); cx.arc(W/2,cbY,14,0,Math.PI*2); cx.fill();
-    cx.strokeStyle='rgba(176,110,255,.7)'; cx.lineWidth=2;
-    cx.beginPath(); cx.arc(W/2,cbY,14,0,Math.PI*2); cx.stroke();
-    cx.font='bold 8px Orbitron,monospace';
-    cx.fillStyle='rgba(220,180,255,.9)';
+    cx.shadowColor='rgba(176,110,255,.8)'; cx.shadowBlur=24;
+    const homeR=20;
+    const homeG=cx.createRadialGradient(W/2,cbY,0,W/2,cbY,homeR);
+    homeG.addColorStop(0,'rgba(176,110,255,.88)');
+    homeG.addColorStop(1,'rgba(70,20,150,.9)');
+    cx.fillStyle=homeG;
+    cx.beginPath(); cx.arc(W/2,cbY,homeR,0,Math.PI*2); cx.fill();
+    cx.strokeStyle='rgba(220,180,255,.82)'; cx.lineWidth=2.4;
+    cx.beginPath(); cx.arc(W/2,cbY,homeR,0,Math.PI*2); cx.stroke();
+    cx.font='bold 12px Orbitron,monospace';
+    cx.fillStyle='rgba(255,245,255,.96)';
     cx.textAlign='center'; cx.textBaseline='middle';
-    cx.fillText('◉',W/2,cbY);
+    cx.fillText('◉',W/2,cbY+1);
     cx.restore();
-    // SELECT & START smaller
-    [{dx:-38,label:'SEL'},{dx:38,label:'STA'}].forEach(({dx,label})=>{
-      cx.fillStyle='rgba(48,16,100,.85)';
-      cx.beginPath(); cx.arc(W/2+dx,cbY+4,9,0,Math.PI*2); cx.fill();
-      cx.strokeStyle='rgba(176,110,255,.4)'; cx.lineWidth=1.5;
-      cx.beginPath(); cx.arc(W/2+dx,cbY+4,9,0,Math.PI*2); cx.stroke();
-      cx.font='bold 5px Orbitron,monospace';
-      cx.fillStyle='rgba(176,110,255,.7)';
-      cx.textAlign='center'; cx.textBaseline='middle';
-      cx.fillText(label,W/2+dx,cbY+4);
-      cx.textBaseline='alphabetic';
-    });
-    ['SELECT','HOME','START'].forEach((lbl,i)=>{
-      const offsets=[-38,0,38];
-      cx.font='500 6px Nunito,sans-serif';
-      cx.fillStyle='rgba(123,106,168,.45)';
-      cx.textAlign='center';
-      cx.fillText(lbl,W/2+offsets[i],cbY+22);
-    });
 
-    /* A/B/X/Y buttons */
-    const abX=W-98, abY=cY+54;
-    [{k:'A',dx:20,dy:0,col:'#22EEFF'},{k:'B',dx:40,dy:20,col:'#FF3EA5'},
-     {k:'X',dx:0, dy:20,col:'#7C3AED'},{k:'Y',dx:20,dy:40,col:'#FFD700'}]
-    .forEach(({k,dx,dy,col})=>{
-      const bx=abX+dx, by=abY+dy;
+    [{dx:-46,label:'SEL'},{dx:46,label:'STA'}].forEach(({dx,label})=>{
+      const x=W/2+dx, r=13;
       cx.save();
-      cx.shadowColor=col+'99'; cx.shadowBlur=18;
-      // Button fill with gradient
-      const btnG=cx.createRadialGradient(bx,by,0,bx,by,14);
-      btnG.addColorStop(0,col+'40');
-      btnG.addColorStop(1,col+'12');
-      cx.fillStyle=btnG;
-      cx.beginPath(); cx.arc(bx,by,14,0,Math.PI*2); cx.fill();
-      cx.strokeStyle=col+'cc'; cx.lineWidth=2;
-      cx.beginPath(); cx.arc(bx,by,14,0,Math.PI*2); cx.stroke();
-      cx.font='bold 10px Orbitron,monospace';
-      cx.fillStyle=col; cx.textAlign='center'; cx.textBaseline='middle';
-      cx.fillText(k,bx,by);
-      cx.textBaseline='alphabetic';
+      cx.shadowColor='rgba(124,58,237,.45)'; cx.shadowBlur=16;
+      const miniG=cx.createRadialGradient(x,cbY+8,0,x,cbY+8,r);
+      miniG.addColorStop(0,'rgba(95,36,188,.92)');
+      miniG.addColorStop(1,'rgba(32,10,78,.96)');
+      cx.fillStyle=miniG;
+      cx.beginPath(); cx.arc(x,cbY+8,r,0,Math.PI*2); cx.fill();
+      cx.strokeStyle='rgba(176,110,255,.58)'; cx.lineWidth=1.8;
+      cx.beginPath(); cx.arc(x,cbY+8,r,0,Math.PI*2); cx.stroke();
+      cx.font='bold 7px Orbitron,monospace';
+      cx.fillStyle='rgba(240,230,255,.88)';
+      cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText(label,x,cbY+8);
       cx.restore();
     });
 
-    /* Speaker grilles - larger, more visible */
+    ['SELECT','HOME','START'].forEach((lbl,i)=>{
+      const offsets=[-46,0,46];
+      cx.font=i===1?'700 9px Nunito,sans-serif':'600 9px Nunito,sans-serif';
+      cx.fillStyle=i===1?'rgba(220,200,255,.9)':'rgba(170,140,230,.72)';
+      cx.textAlign='center';
+      cx.fillText(lbl,W/2+offsets[i],cbY+42);
+    });
+    cx.font='600 9px Nunito,sans-serif';
+    cx.fillStyle='rgba(150,120,215,.72)';
+    cx.fillText('Game controls',W/2,cbY+58);
+
+    /* A/B/X/Y buttons */
+    const abX=W-102, abY=cY+96, r=19;
+    [{k:'A',dx:24,dy:0,col:'#22EEFF'},{k:'B',dx:50,dy:24,col:'#FF3EA5'},
+     {k:'X',dx:-2, dy:24,col:'#7C3AED'},{k:'Y',dx:24,dy:50,col:'#FFD700'}]
+    .forEach(({k,dx,dy,col})=>{
+      const bx=abX+dx, by=abY+dy;
+      cx.save();
+      cx.shadowColor=col+'99'; cx.shadowBlur=24;
+      const btnG=cx.createRadialGradient(bx-2,by-2,0,bx,by,r+2);
+      btnG.addColorStop(0,col+'66');
+      btnG.addColorStop(1,col+'14');
+      cx.fillStyle=btnG;
+      cx.beginPath(); cx.arc(bx,by,r,0,Math.PI*2); cx.fill();
+      cx.strokeStyle=col+'e8'; cx.lineWidth=2.4;
+      cx.beginPath(); cx.arc(bx,by,r,0,Math.PI*2); cx.stroke();
+      cx.font='bold 14px Orbitron,monospace';
+      cx.fillStyle=col; cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText(k,bx,by+1);
+      cx.restore();
+    });
+    cx.textBaseline='alphabetic';
+    cx.font='700 11px Nunito,sans-serif';
+    cx.fillStyle='rgba(230,220,255,.92)';
+    cx.textAlign='center';
+    cx.fillText('A / B / X / Y', abX+24, cY+180);
+    cx.font='600 9px Nunito,sans-serif';
+    cx.fillStyle='rgba(150,120,215,.72)';
+    cx.fillText('Rotate & drop', abX+24, cY+196);
+
+    // Decorative connector lines to reduce empty space
+    cx.save();
+    cx.strokeStyle='rgba(176,110,255,.14)';
+    cx.lineWidth=1;
+    [[148,cY+122,190,cY+122],[370,cY+122,418,cY+122],[148,cY+168,190,cY+168],[370,cY+168,418,cY+168]].forEach(([x1,y1,x2,y2])=>{
+      cx.beginPath(); cx.moveTo(x1,y1); cx.lineTo(x2,y2); cx.stroke();
+    });
+    cx.restore();
+
+    /* Speaker grilles */
     const spkY=H-52;
     cx.save();
     for(let row=0;row<3;row++){
       for(let col=0;col<6;col++){
-        cx.fillStyle='rgba(176,110,255,.22)';
+        cx.fillStyle='rgba(176,110,255,.26)';
         cx.shadowColor='rgba(176,110,255,.3)'; cx.shadowBlur=4;
         cx.beginPath(); cx.arc(42+col*12,spkY+row*10,4,0,Math.PI*2); cx.fill();
         cx.beginPath(); cx.arc(W-42-col*12,spkY+row*10,4,0,Math.PI*2); cx.fill();
@@ -1073,17 +1137,14 @@ function downloadResult(){
     }
     cx.restore();
 
-    // Bottom centre logo text
     cx.font='600 8px Nunito,sans-serif';
     cx.fillStyle='rgba(176,110,255,.22)';
     cx.textAlign='center';
     cx.fillText('magic-tetris.game', W/2, H-18);
 
-    /* Export — show preview modal so user can save */
     const dataUrl = cv.toDataURL('image/png');
     const fileName = `magic-tetris-${P.name||'player'}-${score}.png`;
 
-    // Try direct download first (works when opened as a real file/server)
     try {
       const a = document.createElement('a');
       a.download = fileName;
@@ -1093,21 +1154,24 @@ function downloadResult(){
       document.body.removeChild(a);
     } catch(e){}
 
-    // Always also show the image preview modal
     showImgModal(dataUrl, fileName);
   }
 
   function drawLogo(logoImg){
-    // Draw Magic Tetris logo in header area
     if(logoImg){
-      const lW=170, lH=80;
-      const lX=(W-lW)/2, lY=4;
+      const maxW=188, maxH=78;
+      const iw=logoImg.naturalWidth || maxW;
+      const ih=logoImg.naturalHeight || maxH;
+      const scale=Math.min(maxW/iw, maxH/ih);
+      const lW=Math.max(1, Math.round(iw*scale));
+      const lH=Math.max(1, Math.round(ih*scale));
+      const lX=Math.round((W-lW)/2);
+      const lY=10;
       cx.save();
-      cx.shadowColor='rgba(176,110,255,.5)'; cx.shadowBlur=20;
+      cx.shadowColor='rgba(176,110,255,.55)'; cx.shadowBlur=24;
       cx.drawImage(logoImg,lX,lY,lW,lH);
       cx.restore();
     } else {
-      // Fallback text
       cx.save();
       cx.shadowColor='rgba(176,110,255,.9)'; cx.shadowBlur=26;
       cx.font='bold 14px Orbitron,monospace';
@@ -1117,13 +1181,11 @@ function downloadResult(){
       cx.fillText('✦ MAGIC TETRIS ✦', W/2, 64);
       cx.restore();
     }
-    // Dot divider
     const dotPal=['#7C3AED','#FF3EA5','#22EEFF','#FFD700','#c084fc','#22EEFF','#FF3EA5'];
     [-90,-60,-30,0,30,60,90].forEach((dx,i)=>{
       cx.fillStyle=dotPal[i];
       cx.beginPath(); cx.arc(W/2+dx,90,2.2,0,Math.PI*2); cx.fill();
     });
-    // Now load avatar
     if(avSrc && avSrc.length>10){
       const img=new Image();
       img.onload=()=>drawAvatarCircle(img);
@@ -1153,7 +1215,6 @@ function downloadResult(){
     drawStats();
   }
 
-  // Load Magic Tetris logo first
   const logoImg = new Image();
   logoImg.onload = ()=>drawLogo(logoImg);
   logoImg.onerror = ()=>drawLogo(null);
