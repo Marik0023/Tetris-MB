@@ -902,7 +902,9 @@ function downloadResult(){
   cx.restore();
 
   const avSrc=P.avatar;
-  const avX=SX+52, avY=SY+160, avR=40;
+  const infoGroupW=286;
+  const infoGroupX=SX + Math.round((SW-infoGroupW)/2);
+  const avX=infoGroupX+40, avY=SY+160, avR=40;
 
   function drawGlowPill(x,y,w,h,c1,c2,a=.18){
     const g=cx.createLinearGradient(x,y,x+w,y+h);
@@ -1159,14 +1161,14 @@ function downloadResult(){
 
   function drawLogo(logoImg){
     if(logoImg){
-      const maxW=188, maxH=78;
+      const maxW=236, maxH=92;
       const iw=logoImg.naturalWidth || maxW;
       const ih=logoImg.naturalHeight || maxH;
       const scale=Math.min(maxW/iw, maxH/ih);
       const lW=Math.max(1, Math.round(iw*scale));
       const lH=Math.max(1, Math.round(ih*scale));
       const lX=Math.round((W-lW)/2);
-      const lY=10;
+      const lY=8;
       cx.save();
       cx.shadowColor='rgba(176,110,255,.55)'; cx.shadowBlur=24;
       cx.drawImage(logoImg,lX,lY,lW,lH);
@@ -1178,13 +1180,13 @@ function downloadResult(){
       const lgG=cx.createLinearGradient(W/2-120,0,W/2+120,0);
       lgG.addColorStop(0,'#B06EFF'); lgG.addColorStop(.5,'#22EEFF'); lgG.addColorStop(1,'#FF3EA5');
       cx.fillStyle=lgG; cx.textAlign='center';
-      cx.fillText('✦ MAGIC TETRIS ✦', W/2, 64);
+      cx.fillText('✦ MAGIC TETRIS ✦', W/2, 68);
       cx.restore();
     }
     const dotPal=['#7C3AED','#FF3EA5','#22EEFF','#FFD700','#c084fc','#22EEFF','#FF3EA5'];
     [-90,-60,-30,0,30,60,90].forEach((dx,i)=>{
       cx.fillStyle=dotPal[i];
-      cx.beginPath(); cx.arc(W/2+dx,90,2.2,0,Math.PI*2); cx.fill();
+      cx.beginPath(); cx.arc(W/2+dx,92,2.2,0,Math.PI*2); cx.fill();
     });
     if(avSrc && avSrc.length>10){
       const img=new Image();
