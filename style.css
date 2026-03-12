@@ -631,4 +631,10 @@ kbd{
   color:var(--lilac);font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;
   transition:all .2s;
 }
+.img-modal-dl--done{
+  background:linear-gradient(135deg,#1a6b3a,#147d3e) !important;
+  box-shadow:0 4px 18px rgba(20,125,62,.5) !important;
+  cursor:default !important;
+  opacity:.85;
+}
 .img-modal-cl:hover{border-color:var(--neon);color:var(--neon);}
