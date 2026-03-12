@@ -299,24 +299,7 @@ function doRestart(){ closeModal(); initGame(); }
 function showImgModal(dataUrl, fileName){
   const modal = document.getElementById('img-modal');
   const img   = document.getElementById('img-modal-img');
-  const dlBtn = document.getElementById('img-modal-dl-btn');
   img.src = dataUrl;
-  // Reset button state
-  dlBtn.classList.remove('img-modal-dl--done');
-  dlBtn.textContent = '⬇ Download';
-  dlBtn.disabled = false;
-  dlBtn.onclick = ()=>{
-    const a = document.createElement('a');
-    a.download = fileName;
-    a.href = dataUrl;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    // Change button to "saved" state
-    dlBtn.disabled = true;
-    dlBtn.textContent = '✓ Saved';
-    dlBtn.classList.add('img-modal-dl--done');
-  };
   modal.classList.add('open');
 }
 

@@ -602,38 +602,21 @@ kbd{
   display:none;position:fixed;inset:0;z-index:1100;
   background:rgba(0,0,0,.9);backdrop-filter:blur(12px);
   flex-direction:column;align-items:center;justify-content:center;
-  padding:16px;gap:14px;
+  padding:16px;gap:18px;
 }
 #img-modal.open{display:flex;}
 #img-modal img{
-  max-width:min(420px,92vw);max-height:62vh;object-fit:contain;
+  max-width:min(420px,92vw);max-height:72vh;object-fit:contain;
   border-radius:18px;
   box-shadow:0 0 48px rgba(124,58,237,.6),0 0 90px rgba(255,60,165,.2);
   border:2px solid rgba(176,110,255,.3);
 }
-.img-modal-hint{
-  font-family:'Nunito',sans-serif;font-size:.78rem;
-  color:rgba(180,120,255,.8);text-align:center;line-height:1.7;
-}
-.img-modal-hint strong{color:var(--neon);}
-.img-modal-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
-.img-modal-dl{
-  padding:11px 26px;border-radius:10px;border:none;cursor:pointer;
-  font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;letter-spacing:.04em;
-  background:linear-gradient(135deg,#a855f7,#7C3AED);color:#fff;
-  box-shadow:0 4px 18px rgba(124,58,237,.5);transition:all .2s;
-}
-.img-modal-dl:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,58,237,.7);}
+.img-modal-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;}
+.img-modal-btns--single{margin-top:4px;}
 .img-modal-cl{
-  padding:11px 20px;border-radius:10px;cursor:pointer;
-  border:1.5px solid var(--rim);background:transparent;
-  color:var(--lilac);font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;
-  transition:all .2s;
-}
-.img-modal-dl--done{
-  background:linear-gradient(135deg,#1a6b3a,#147d3e) !important;
-  box-shadow:0 4px 18px rgba(20,125,62,.5) !important;
-  cursor:default !important;
-  opacity:.85;
+  min-width:220px;padding:14px 26px;border-radius:14px;cursor:pointer;
+  border:1.5px solid var(--rim);background:rgba(5,2,20,.72);
+  color:var(--lilac);font-family:'Orbitron',monospace;font-size:.92rem;font-weight:700;
+  transition:all .2s;box-shadow:0 0 24px rgba(124,58,237,.14);
 }
 .img-modal-cl:hover{border-color:var(--neon);color:var(--neon);}
