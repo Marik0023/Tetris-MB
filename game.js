@@ -346,9 +346,9 @@ function renderLB(){
   pod.innerHTML=top.map((e,i)=>`
     <div class="pod ${cls[i]}">
       <div class="pod-crown">${medals[i]}</div>
-      <img class="pod-av" src="${e.avatar}" alt="">
+      <img class="pod-av" src="${makeAvatar(e.name||'?')}" alt="">
       <div class="pod-nm">${esc(e.name||e.nickname)}</div>
-      <div class="pod-sc">${e.score.toLocaleString()}</div>
+      <div class="pod-sc">${Number(e.score).toLocaleString()}</div>
     </div>`).join('');
 
   const rest=LB.slice(3);
@@ -357,9 +357,9 @@ function renderLB(){
     const rk=i+4, isMe=e.name===P.name;
     return `<div class="lb-row${isMe?' me':''}">
       <span class="lb-rk rn">#${rk}</span>
-      <img class="lb-av" src="${e.avatar}" alt="">
+      <img class="lb-av" src="${makeAvatar(e.name||'?')}" alt="">
       <span class="lb-nm">${esc(e.name||e.nickname)}</span>
-      <span class="lb-sc">${e.score.toLocaleString()}</span>
+      <span class="lb-sc">${Number(e.score).toLocaleString()}</span>
     </div>`;
   }).join('');
 }
