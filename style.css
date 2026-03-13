@@ -336,22 +336,36 @@ body::after {
 }
 .lp-tip-text {
   font-size: 0.58rem; color: var(--muted); line-height: 1.4;
+  transition: opacity 0.2s ease;
 }
 
-.lp-piece-preview {
+.lp-hold {
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(0,245,212,0.07);
   border-radius: var(--r0); padding: 8px 9px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  transition: opacity 0.25s, border-color 0.25s;
 }
-.lp-pp-label {
-  font-size: 0.45rem; font-weight: 700; letter-spacing: 0.2em;
-  color: var(--muted); text-transform: uppercase; margin-bottom: 6px;
+.lp-hold.used { opacity: 0.38; border-color: rgba(155,114,255,0.1); }
+#hc { display: block; }
+
+/* ── COMBO ── */
+.combo-display {
+  position: absolute; top: 18%; left: 50%; transform: translateX(-50%);
+  z-index: 20; pointer-events: none; white-space: nowrap;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.6rem; letter-spacing: 0.18em;
+  color: var(--gold);
+  text-shadow: 0 0 24px rgba(255,199,0,0.9), 0 0 4px rgba(255,199,0,0.5);
+  opacity: 0;
 }
-.lp-blocks {
-  display: grid; gap: 2px;
+@keyframes combo-pop {
+  0%   { transform: translateX(-50%) scale(1.5); opacity: 1; }
+  55%  { transform: translateX(-50%) scale(1.05); opacity: 1; }
+  100% { transform: translateX(-50%) scale(0.9); opacity: 0; }
 }
-.lp-block {
-  width: 12px; height: 12px; border-radius: 2px;
+.combo-display.show {
+  animation: combo-pop 1s ease forwards;
 }
 
 /* hide left panel on mobile */
@@ -484,6 +498,8 @@ kbd {
 }
 .mb:active { transform: scale(0.85); background: rgba(0, 245, 212, 0.1); box-shadow: 0 0 16px rgba(0, 245, 212, 0.3); border-color: var(--cyan); }
 .mb.wide { width: 126px; font-family: 'Bebas Neue', cursive; font-size: 0.88rem; letter-spacing: 0.1em; }
+.mb.hld { background: rgba(155,114,255,0.07); border-color: rgba(155,114,255,0.25); color: var(--violet); font-family: 'Bebas Neue', cursive; font-size: 0.72rem; letter-spacing: 0.1em; }
+.mb.hld:active { background: rgba(155,114,255,0.18); box-shadow: 0 0 16px rgba(155,114,255,0.3); }
 .mb.drp { background: rgba(255, 58, 92, 0.06); border-color: rgba(255, 58, 92, 0.28); color: var(--coral); }
 .mb.drp:active { background: rgba(255, 58, 92, 0.18); box-shadow: 0 0 16px rgba(255, 58, 92, 0.3); }
 

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Magic Tetris</title>
+<link rel="icon" href="assets/logo.webp" type="image/webp">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=20260313b">
 </head>
@@ -72,15 +73,16 @@
         <div class="lp-tip-label">TIP</div>
         <div class="lp-tip-text" id="lp-tip">Hard drop scores 2pts per row</div>
       </div>
-      <div class="lp-piece-preview" id="lp-piece-preview">
-        <div class="lp-pp-label">PIECE</div>
-        <div class="lp-blocks" id="lp-blocks"></div>
+      <div class="lp-hold" id="lp-hold-wrap">
+        <div class="lp-pp-label">HOLD <span style="opacity:0.38;font-size:0.85em">(C)</span></div>
+        <canvas id="hc" width="56" height="46"></canvas>
       </div>
     </div>
     <div class="bwrap" id="bwrap">
       <div class="bwrap-in">
         <canvas id="gc"></canvas>
       </div>
+      <div class="combo-display" id="combo-display"></div>
       <div class="pov" id="pov">
         <h2>⏸ PAUSED</h2>
         <p>Press P / Esc to resume</p>
@@ -105,6 +107,7 @@
         <div class="kh-row"><kbd>← →</kbd>Move</div>
         <div class="kh-row"><kbd>↑/X</kbd>Rotate ↻</div>
         <div class="kh-row"><kbd>Z</kbd>Rotate ↺</div>
+        <div class="kh-row"><kbd>C</kbd>Hold</div>
         <div class="kh-row"><kbd>↓</kbd>Soft drop</div>
         <div class="kh-row"><kbd>Space</kbd>Hard drop</div>
         <div class="kh-row"><kbd>P/Esc</kbd>Pause</div>
@@ -120,6 +123,7 @@
     <div class="dp-row">
       <button class="mb" ontouchstart="tap(event,'rcw')" onclick="tap(null,'rcw')">↻</button>
       <button class="mb" ontouchstart="tap(event,'rccw')" onclick="tap(null,'rccw')">↺</button>
+      <button class="mb hld" ontouchstart="tap(event,'hold')" onclick="tap(null,'hold')">HOLD</button>
     </div>
     <div class="dp-row">
       <button class="mb" ontouchstart="begR(event,'L')" ontouchend="endR()" onmousedown="begR(null,'L')" onmouseup="endR()">←</button>

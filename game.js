@@ -437,11 +437,30 @@ const PKEYS=Object.keys(PIECES);
 let board;
 let cur;    // {key, sh, row, col}
 let nxt;    // next piece
+let hold = null;    // held piece key (or null)
+let holdUsed = false; // can only hold once per piece
+let combo = 0;      // consecutive line-clear streak
 let score, lines, level;
 // State: 'idle'|'play'|'pause'|'anim'|'over'
 let state='idle';
 let dropAcc=0, lastTs=0, animId=null;
 let canvas, ctx, ncv, nctx;
+
+// Lock delay: piece waits 300ms on ground before locking; resets up to 15x on move/rotate
+let lockTO=null, lockResets=0;
+const LOCK_DELAY=300, MAX_LOCK_RESETS=15;
+
+function scheduleLock(){
+  clearTimeout(lockTO);
+  lockTO=setTimeout(()=>{ lockTO=null; if(state==='play') lock(); }, LOCK_DELAY);
+}
+function resetLockDelay(){
+  if(lockTO!==null && lockResets<MAX_LOCK_RESETS){
+    lockResets++;
+    clearTimeout(lockTO);
+    scheduleLock();
+  }
+}
 
 /* ── INIT ── */
 function initGame(){
@@ -469,6 +488,11 @@ function initGame(){
   dropAcc = 0;
   lastTs  = 0;
   state   = 'play';
+  bag     = [];        // fresh 7-bag
+  hold    = null;      // clear hold
+  holdUsed = false;
+  combo   = 0;
+  clearTimeout(lockTO); lockTO=null; lockResets=0;
 
   cur = spawnPiece(rndKey());
   nxt = spawnPiece(rndKey());
@@ -479,6 +503,7 @@ function initGame(){
 
   updateHUD();
   renderNext();
+  renderHold();
   render();
   updateLeftPanel();
 
@@ -486,11 +511,12 @@ function initGame(){
 }
 
 const LP_TIPS=[
+  'C = Hold piece in reserve',
   'Hard drop = 2pts per row',
   'Clear 4 lines for max score',
   'Z/X to rotate CCW/CW',
-  'P or Esc to pause game',
   'Speed increases every 5 lines',
+  'Combos give bonus points!',
 ];
 let lpTipIdx=0, lpTipTimer=null;
 
@@ -506,8 +532,17 @@ function updateLeftPanel(){
   },4000);
 }
 
+/* ── 7-BAG RANDOMIZER ── */
+let bag = [];
 function rndKey(){
-  return PKEYS[Math.floor(Math.random()*PKEYS.length)];
+  if(!bag.length){
+    bag = [...PKEYS];
+    for(let i=bag.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [bag[i],bag[j]]=[bag[j],bag[i]];
+    }
+  }
+  return bag.pop();
 }
 
 /* ── SPAWN ── */
@@ -567,8 +602,11 @@ function loop(ts){
 function autoStep(){
   if(!collides(cur.row+1, cur.col, cur.sh)){
     cur.row++;
+    // Piece moved down — cancel pending lock timer
+    if(lockTO!==null){ clearTimeout(lockTO); lockTO=null; lockResets=0; }
   } else {
-    lock();
+    // Grounded — start lock delay if not already ticking
+    if(lockTO===null) scheduleLock();
   }
 }
 
@@ -579,19 +617,16 @@ function lock(){
     for(let c=0; c<cur.sh[r].length; c++){
       if(!cur.sh[r][c]) continue;
       const nr = cur.row + r;
-      if(nr < 0) continue;           // above visible area — skip
+      if(nr < 0) continue;
       board[nr][cur.col + c] = cur.key;
     }
   }
 
-  // 2. Top-out: if any locked cell ended up above row 2, game is over
-  //    (row 0 and 1 being occupied means the stack reached the ceiling)
-  let toppedOut = false;
-  for(let c=0; c<COLS; c++){
-    if(board[0][c] !== '' || board[1][c] !== ''){ toppedOut=true; break; }
-  }
+  // Clear lock delay
+  clearTimeout(lockTO); lockTO=null; lockResets=0;
+  playSound('lock');
 
-  // 3. Find complete rows
+  // Find complete rows
   const full = [];
   for(let r=0; r<ROWS; r++){
     if(board[r].every(v => v !== '' && v !== 'FL')) full.push(r);
@@ -601,32 +636,33 @@ function lock(){
     state = 'anim';
     full.forEach(r => { for(let c=0;c<COLS;c++) board[r][c]='FL'; });
     render();
+    playSound('clear');
     setTimeout(() => finishClear(full), 120);
-  } else if(toppedOut){
-    gameOver();
   } else {
+    combo = 0; // no lines → break combo streak
     nextPiece();
   }
 }
 
 /* ── FINISH LINE CLEAR ── */
 function finishClear(full){
-  // CRITICAL: splice ALL rows first (descending so indices stay valid),
-  // THEN prepend empty rows. Interleaving splice+unshift shifts indices mid-loop!
   full.sort((a,b) => b-a);
-  for(const r of full) board.splice(r, 1);          // remove all full rows
+  for(const r of full) board.splice(r, 1);
   const n = full.length;
-  for(let i=0;i<n;i++) board.unshift(Array(COLS).fill('')); // add n empty rows at top
+  for(let i=0;i<n;i++) board.unshift(Array(COLS).fill(''));
 
-  // Safety: ensure board always has exactly ROWS rows
   while(board.length < ROWS) board.unshift(Array(COLS).fill(''));
   while(board.length > ROWS) board.shift();
 
+  combo++;
+  const comboBonus = combo > 1 ? (combo-1) * 50 * level : 0;
   const pts = LINE_PTS[n] * level;
-  score += pts;
+  score += pts + comboBonus;
   lines += n;
   level  = Math.min(Math.floor(lines / LINES_PER_LEVEL) + 1, 20);
   if(score > P.best) P.best = score;
+
+  if(combo > 1) showCombo(combo);
 
   updateHUD();
   state = 'play';
@@ -639,13 +675,15 @@ function nextPiece(){
   cur = nxt;
   nxt = spawnPiece(rndKey());
   dropAcc = 0;
+  holdUsed = false; // new piece — can hold again
 
-  // If spawn position is immediately blocked → game over
+  // Top-out: spawn position already occupied
   if(collides(cur.row, cur.col, cur.sh)){
     gameOver(); return;
   }
 
   renderNext();
+  renderHold();
   render();
 }
 
@@ -654,39 +692,47 @@ function nextPiece(){
 // Move left
 function mvL(){
   if(state !== 'play') return;
-  if(!collides(cur.row, cur.col-1, cur.sh)){ cur.col--; render(); }
+  if(!collides(cur.row, cur.col-1, cur.sh)){
+    cur.col--;
+    playSound('move');
+    if(lockTO!==null) resetLockDelay();
+    render();
+  }
 }
 
 // Move right
 function mvR(){
   if(state !== 'play') return;
-  if(!collides(cur.row, cur.col+1, cur.sh)){ cur.col++; render(); }
+  if(!collides(cur.row, cur.col+1, cur.sh)){
+    cur.col++;
+    playSound('move');
+    if(lockTO!==null) resetLockDelay();
+    render();
+  }
 }
 
-// Soft drop: move down 1 row manually.
-// Resets dropAcc so gravity timer restarts from 0.
-// NO score added (prevents spam-↓ exploit).
+// Soft drop
 function softDrop(){
   if(state !== 'play') return;
   if(!collides(cur.row+1, cur.col, cur.sh)){
     cur.row++;
-    dropAcc = 0; // reset gravity so piece doesn't immediately lock
+    dropAcc = 0;
+    if(lockTO!==null){ clearTimeout(lockTO); lockTO=null; lockResets=0; }
     render();
   } else {
-    lock();
+    if(lockTO===null) scheduleLock();
   }
 }
 
-// Hard drop: instantly drop to bottom.
-// Awards 2 points per row dropped.
+// Hard drop: instantly drop + 2pts/row
 function hardDrop(){
   if(state !== 'play') return;
+  clearTimeout(lockTO); lockTO=null; lockResets=0;
   let dropped = 0;
   while(!collides(cur.row+1, cur.col, cur.sh)){
     cur.row++;
     dropped++;
   }
-  // Only add score for hard drop (not spam-able since piece locks immediately)
   score += dropped * 2;
   if(score > P.best) P.best = score;
   updateHUD();
@@ -720,6 +766,8 @@ function tryRotate(ns){
       cur.row += dr;
       cur.col += dc;
       cur.sh  = ns;
+      playSound('rotate');
+      if(lockTO!==null) resetLockDelay();
       render();
       return;
     }
@@ -849,6 +897,111 @@ function renderNext(){
   nctx.shadowBlur=0;
 }
 
+/* ── HOLD ── */
+function renderHold(){
+  const hcv=document.getElementById('hc');
+  if(!hcv) return;
+  const hcx=hcv.getContext('2d');
+  hcx.clearRect(0,0,hcv.width,hcv.height);
+  const wrap=document.getElementById('lp-hold-wrap');
+  if(wrap) wrap.classList.toggle('used', holdUsed);
+  if(!hold) return;
+  const sh=PIECES[hold].sh, cs=11;
+  const ox=Math.floor((hcv.width -sh[0].length*cs)/2);
+  const oy=Math.floor((hcv.height-sh.length   *cs)/2);
+  hcx.globalAlpha = holdUsed ? 0.38 : 1;
+  sh.forEach((row,r) => row.forEach((v,c) => {
+    if(!v) return;
+    drawCell(hcx, ox+c*cs, oy+r*cs, hold, cs);
+  }));
+  hcx.globalAlpha=1; hcx.shadowBlur=0;
+}
+
+function holdPiece(){
+  if(state!=='play' || holdUsed) return;
+  holdUsed=true;
+  clearTimeout(lockTO); lockTO=null; lockResets=0;
+  if(!hold){
+    hold=cur.key;
+    cur=nxt;
+    nxt=spawnPiece(rndKey());
+  } else {
+    const tmp=hold;
+    hold=cur.key;
+    cur=spawnPiece(tmp);
+  }
+  dropAcc=0;
+  if(collides(cur.row,cur.col,cur.sh)){ gameOver(); return; }
+  playSound('hold');
+  renderHold();
+  renderNext();
+  render();
+}
+
+/* ── COMBO DISPLAY ── */
+function showCombo(n){
+  const el=document.getElementById('combo-display');
+  if(!el) return;
+  el.textContent=`${n}× COMBO`;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+/* ── WEB AUDIO ── */
+let audioCtx=null;
+function getAC(){
+  if(!audioCtx) try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  return audioCtx;
+}
+function playSound(type){
+  const ac=getAC(); if(!ac) return;
+  try{
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    const t=ac.currentTime;
+    switch(type){
+      case 'move':
+        o.frequency.setValueAtTime(180,t);
+        g.gain.setValueAtTime(0.04,t);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+        o.start(t); o.stop(t+0.05); break;
+      case 'rotate':
+        o.type='triangle';
+        o.frequency.setValueAtTime(340,t);
+        g.gain.setValueAtTime(0.055,t);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+        o.start(t); o.stop(t+0.07); break;
+      case 'lock':
+        o.type='square';
+        o.frequency.setValueAtTime(110,t);
+        o.frequency.exponentialRampToValueAtTime(55,t+0.09);
+        g.gain.setValueAtTime(0.07,t);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.11);
+        o.start(t); o.stop(t+0.11); break;
+      case 'clear':
+        o.frequency.setValueAtTime(440,t);
+        o.frequency.exponentialRampToValueAtTime(880,t+0.18);
+        g.gain.setValueAtTime(0.13,t);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.24);
+        o.start(t); o.stop(t+0.24); break;
+      case 'hold':
+        o.frequency.setValueAtTime(550,t);
+        o.frequency.exponentialRampToValueAtTime(380,t+0.1);
+        g.gain.setValueAtTime(0.06,t);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+        o.start(t); o.stop(t+0.12); break;
+      case 'over':
+        o.type='sawtooth';
+        o.frequency.setValueAtTime(280,t);
+        o.frequency.exponentialRampToValueAtTime(40,t+0.65);
+        g.gain.setValueAtTime(0.1,t);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.65);
+        o.start(t); o.stop(t+0.65); break;
+    }
+  }catch(e){}
+}
+
 /* ── HUD ── */
 function updateHUD(){
   document.getElementById('h-sc').textContent = score.toLocaleString();
@@ -862,6 +1015,9 @@ function updateHUD(){
 /* ── GAME OVER ── */
 function gameOver(){
   state='over';
+  clearTimeout(lockTO); lockTO=null; lockResets=0;
+  clearInterval(lpTipTimer); lpTipTimer=null;
+  playSound('over');
   try { saveLB(); } catch {}
   const rank = myRank();
   document.getElementById('oc-sc').textContent = score.toLocaleString();
@@ -1115,12 +1271,29 @@ function downloadResult(){
       // ── Export ──
       const dataUrl=cv.toDataURL('image/png');
       const fileName=`magic-tetris-${P.name||'player'}-${score}.png`;
-      try{
-        const a=document.createElement('a');
-        a.download=fileName; a.href=dataUrl;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      }catch(e){}
-      showImgModal(dataUrl, fileName);
+
+      async function doExport(){
+        // Try native share (iOS Safari, Android Chrome)
+        if(typeof navigator.share !== 'undefined'){
+          try{
+            const blob=await (await fetch(dataUrl)).blob();
+            const file=new File([blob],fileName,{type:'image/png'});
+            if(navigator.canShare && navigator.canShare({files:[file]})){
+              await navigator.share({files:[file],title:`Magic Tetris — ${P.name||'Wizard'}`});
+              showImgModal(dataUrl,fileName);
+              return;
+            }
+          }catch(e){}
+        }
+        // Fallback: direct download
+        try{
+          const a=document.createElement('a');
+          a.download=fileName; a.href=dataUrl;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }catch(e){}
+        showImgModal(dataUrl,fileName);
+      }
+      doExport();
     }
 
     const avSrc=P.avatar;
@@ -1138,16 +1311,6 @@ function downloadResult(){
   logoImg.onload=()=>drawContent(logoImg);
   logoImg.onerror=()=>drawContent(null);
   logoImg.src='assets/logo.webp';
-}
-
-function roundRect(cx,x,y,w,h,r){
-  cx.beginPath();
-  cx.moveTo(x+r,y);
-  cx.lineTo(x+w-r,y); cx.arcTo(x+w,y,x+w,y+r,r);
-  cx.lineTo(x+w,y+h-r); cx.arcTo(x+w,y+h,x+w-r,y+h,r);
-  cx.lineTo(x+r,y+h); cx.arcTo(x,y+h,x,y+h-r,r);
-  cx.lineTo(x,y+r); cx.arcTo(x,y,x+r,y,r);
-  cx.closePath();
 }
 
 function roundRect(cx,x,y,w,h,r){
@@ -1234,6 +1397,7 @@ document.addEventListener('keydown', e=>{
     case 'ArrowUp':    e.preventDefault(); rotateCW();    break;
     case 'x': case 'X': rotateCW();  break;
     case 'z': case 'Z': rotateCCW(); break;
+    case 'c': case 'C': holdPiece(); break;
     case ' ':          e.preventDefault(); hardDrop();    break;
   }
 });
@@ -1255,6 +1419,7 @@ function tap(e, action){
   if(action==='rcw')  rotateCW();
   if(action==='rccw') rotateCCW();
   if(action==='hd')   hardDrop();
+  if(action==='hold') holdPiece();
 }
 
 function begR(e, dir){
