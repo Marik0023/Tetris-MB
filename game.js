@@ -437,8 +437,6 @@ const PKEYS=Object.keys(PIECES);
 let board;
 let cur;    // {key, sh, row, col}
 let nxt;    // next piece
-let hold = null;    // held piece key (or null)
-let holdUsed = false; // can only hold once per piece
 let combo = 0;      // consecutive line-clear streak
 let score, lines, level;
 // State: 'idle'|'play'|'pause'|'anim'|'over'
@@ -489,8 +487,6 @@ function initGame(){
   lastTs  = 0;
   state   = 'play';
   bag     = [];        // fresh 7-bag
-  hold    = null;      // clear hold
-  holdUsed = false;
   combo   = 0;
   clearTimeout(lockTO); lockTO=null; lockResets=0;
 
@@ -503,7 +499,6 @@ function initGame(){
 
   updateHUD();
   renderNext();
-  renderHold();
   render();
   updateLeftPanel();
 
@@ -511,10 +506,10 @@ function initGame(){
 }
 
 const LP_TIPS=[
-  'C = Hold piece in reserve',
   'Hard drop = 2pts per row',
   'Clear 4 lines for max score',
   'Z/X to rotate CCW/CW',
+  'P or Esc to pause game',
   'Speed increases every 5 lines',
   'Combos give bonus points!',
 ];
@@ -675,7 +670,6 @@ function nextPiece(){
   cur = nxt;
   nxt = spawnPiece(rndKey());
   dropAcc = 0;
-  holdUsed = false; // new piece — can hold again
 
   // Top-out: spawn position already occupied
   if(collides(cur.row, cur.col, cur.sh)){
@@ -683,7 +677,6 @@ function nextPiece(){
   }
 
   renderNext();
-  renderHold();
   render();
 }
 
@@ -897,47 +890,6 @@ function renderNext(){
   nctx.shadowBlur=0;
 }
 
-/* ── HOLD ── */
-function renderHold(){
-  const hcv=document.getElementById('hc');
-  if(!hcv) return;
-  const hcx=hcv.getContext('2d');
-  hcx.clearRect(0,0,hcv.width,hcv.height);
-  const wrap=document.getElementById('lp-hold-wrap');
-  if(wrap) wrap.classList.toggle('used', holdUsed);
-  if(!hold) return;
-  const sh=PIECES[hold].sh, cs=11;
-  const ox=Math.floor((hcv.width -sh[0].length*cs)/2);
-  const oy=Math.floor((hcv.height-sh.length   *cs)/2);
-  hcx.globalAlpha = holdUsed ? 0.38 : 1;
-  sh.forEach((row,r) => row.forEach((v,c) => {
-    if(!v) return;
-    drawCell(hcx, ox+c*cs, oy+r*cs, hold, cs);
-  }));
-  hcx.globalAlpha=1; hcx.shadowBlur=0;
-}
-
-function holdPiece(){
-  if(state!=='play' || holdUsed) return;
-  holdUsed=true;
-  clearTimeout(lockTO); lockTO=null; lockResets=0;
-  if(!hold){
-    hold=cur.key;
-    cur=nxt;
-    nxt=spawnPiece(rndKey());
-  } else {
-    const tmp=hold;
-    hold=cur.key;
-    cur=spawnPiece(tmp);
-  }
-  dropAcc=0;
-  if(collides(cur.row,cur.col,cur.sh)){ gameOver(); return; }
-  playSound('hold');
-  renderHold();
-  renderNext();
-  render();
-}
-
 /* ── COMBO DISPLAY ── */
 function showCombo(n){
   const el=document.getElementById('combo-display');
@@ -985,12 +937,6 @@ function playSound(type){
         g.gain.setValueAtTime(0.13,t);
         g.gain.exponentialRampToValueAtTime(0.001,t+0.24);
         o.start(t); o.stop(t+0.24); break;
-      case 'hold':
-        o.frequency.setValueAtTime(550,t);
-        o.frequency.exponentialRampToValueAtTime(380,t+0.1);
-        g.gain.setValueAtTime(0.06,t);
-        g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
-        o.start(t); o.stop(t+0.12); break;
       case 'over':
         o.type='sawtooth';
         o.frequency.setValueAtTime(280,t);
@@ -1148,36 +1094,21 @@ function downloadResult(){
     // Separator dots
     const dotCols=['#00F5D4','#9B72FF','#FFC700','#FF3A5C','#00F5D4'];
     dotCols.forEach((c,i)=>{
-      cx.fillStyle=c;
-      cx.globalAlpha=0.6;
-      cx.beginPath();
-      cx.arc(W/2+(i-2)*14, 106, 2, 0, Math.PI*2);
-      cx.fill();
+      cx.fillStyle=c; cx.globalAlpha=0.6;
+      cx.beginPath(); cx.arc(W/2+(i-2)*14, 106, 2, 0, Math.PI*2); cx.fill();
     });
     cx.globalAlpha=1;
 
     // ── GAME OVER label ──
     cx.save();
     cx.font='bold 32px "Bebas Neue",cursive,monospace';
-    cx.letterSpacing='0.1em';
     cx.shadowColor='rgba(255,58,92,0.5)'; cx.shadowBlur=20;
-    cx.fillStyle='#FF3A5C';
-    cx.textAlign='center';
+    cx.fillStyle='#FF3A5C'; cx.textAlign='center';
     cx.fillText('GAME OVER', W/2, 140);
     cx.restore();
 
-    // Rank
-    const rnkTxt = (document.getElementById('oc-rnk')||{}).textContent || '🏆 RANK #1';
-    cx.save();
-    cx.font='bold 11px monospace';
-    cx.fillStyle='#FFC700';
-    cx.shadowColor='rgba(255,199,0,0.5)'; cx.shadowBlur=10;
-    cx.textAlign='center';
-    cx.fillText(rnkTxt, W/2, 158);
-    cx.restore();
-
     // ── Avatar circle ──
-    const avX=W/2, avY=220, avR=38;
+    const avX=W/2, avY=200, avR=38;
     cx.save();
     cx.shadowColor='rgba(0,245,212,0.5)'; cx.shadowBlur=24;
     cx.strokeStyle='rgba(0,245,212,0.7)'; cx.lineWidth=2;
@@ -1202,9 +1133,8 @@ function downloadResult(){
 
       // Player name
       cx.font='bold 13px "JetBrains Mono",monospace';
-      cx.fillStyle='#EDEAF8';
-      cx.textAlign='center';
-      cx.fillText(P.name||'Wizard', W/2, 278);
+      cx.fillStyle='#EDEAF8'; cx.textAlign='center';
+      cx.fillText(P.name||'Wizard', W/2, 258);
 
       // ── Stats grid 2×2 ──
       const stats=[
@@ -1213,7 +1143,7 @@ function downloadResult(){
         {label:'LINES', val:String(lines),  col:'#9B72FF'},
         {label:'LEVEL', val:String(level),  col:'#00F5D4'},
       ];
-      const gx=40, gy=296, gw=(W-80-10)/2, gh=72, gGap=10;
+      const gx=40, gy=274, gw=(W-80-10)/2, gh=72, gGap=10;
       stats.forEach((st,i)=>{
         const col=i%2, row=Math.floor(i/2);
         const bx=gx+col*(gw+gGap), by=gy+row*(gh+gGap);
@@ -1271,29 +1201,12 @@ function downloadResult(){
       // ── Export ──
       const dataUrl=cv.toDataURL('image/png');
       const fileName=`magic-tetris-${P.name||'player'}-${score}.png`;
-
-      async function doExport(){
-        // Try native share (iOS Safari, Android Chrome)
-        if(typeof navigator.share !== 'undefined'){
-          try{
-            const blob=await (await fetch(dataUrl)).blob();
-            const file=new File([blob],fileName,{type:'image/png'});
-            if(navigator.canShare && navigator.canShare({files:[file]})){
-              await navigator.share({files:[file],title:`Magic Tetris — ${P.name||'Wizard'}`});
-              showImgModal(dataUrl,fileName);
-              return;
-            }
-          }catch(e){}
-        }
-        // Fallback: direct download
-        try{
-          const a=document.createElement('a');
-          a.download=fileName; a.href=dataUrl;
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        }catch(e){}
-        showImgModal(dataUrl,fileName);
-      }
-      doExport();
+      try{
+        const a=document.createElement('a');
+        a.download=fileName; a.href=dataUrl;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }catch(e){}
+      showImgModal(dataUrl, fileName);
     }
 
     const avSrc=P.avatar;
@@ -1397,7 +1310,6 @@ document.addEventListener('keydown', e=>{
     case 'ArrowUp':    e.preventDefault(); rotateCW();    break;
     case 'x': case 'X': rotateCW();  break;
     case 'z': case 'Z': rotateCCW(); break;
-    case 'c': case 'C': holdPiece(); break;
     case ' ':          e.preventDefault(); hardDrop();    break;
   }
 });
@@ -1419,7 +1331,6 @@ function tap(e, action){
   if(action==='rcw')  rotateCW();
   if(action==='rccw') rotateCCW();
   if(action==='hd')   hardDrop();
-  if(action==='hold') holdPiece();
 }
 
 function begR(e, dir){
