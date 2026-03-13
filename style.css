@@ -628,12 +628,12 @@ kbd {
   #nc { width: 64px !important; height: 50px !important; margin: 0; }
   .kh { display: none; }
   .sp-btns {
-    flex: 1 1 auto;
+    flex: 1 1 120px;
     flex-direction: column;
     gap: 3px;
-    min-width: 80px;
+    min-width: 110px;
   }
-  .sb { padding: 6px 8px; font-size: 0.58rem; }
+  .sb { padding: 6px 8px; font-size: 0.58rem; width: 100%; }
 
   /* Game over page — account for fixed header */
   #pg-over { padding-top: 20px; }

@@ -808,9 +808,22 @@ function render(){
     let gr = cur.row;
     while(!collides(gr+1, cur.col, cur.sh)) gr++;
     if(gr > cur.row){
-      ctx.globalAlpha = 0.1;
-      drawPiece(ctx, cur.col, gr, cur.sh, cur.key);
-      ctx.globalAlpha = 1;
+      const p = PIECES[cur.key];
+      ctx.save();
+      ctx.strokeStyle = p ? p.col + '55' : 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.fillStyle = p ? p.col + '18' : 'rgba(255,255,255,0.06)';
+      cur.sh.forEach((row, r) => row.forEach((v, c) => {
+        if(!v) return;
+        const nr = gr + r;
+        if(nr < 0) return;
+        const px = (cur.col + c) * CELL + 1;
+        const py = nr * CELL + 1;
+        const sz = CELL - 2;
+        ctx.fillRect(px, py, sz, sz);
+        ctx.strokeRect(px, py, sz, sz);
+      }));
+      ctx.restore();
     }
   }
 
