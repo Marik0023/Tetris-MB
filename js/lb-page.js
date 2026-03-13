@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-  initParticles();
   renderPage();
   document.getElementById('lb-clear-btn').addEventListener('click', () => {
     if (confirm('Clear all scores?')) { Leaderboard.clear(); renderPage(); }
@@ -53,15 +52,4 @@ function renderTable(entries) {
   });
 }
 
-function initParticles() {
-  const c = document.getElementById('particles-container');
-  if (!c) return;
-  const colors = ['#8b5cf6','#ffd700','#00f5ff','#ff49db'];
-  for (let i = 0; i < 30; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    const sz = Math.random()*3+1, cl = colors[i%colors.length];
-    p.style.cssText = `width:${sz}px;height:${sz}px;background:${cl};left:${Math.random()*100}%;animation-duration:${8+Math.random()*10}s;animation-delay:${Math.random()*-15}s;box-shadow:0 0 ${sz*2}px ${cl};`;
-    c.appendChild(p);
-  }
-}
+
