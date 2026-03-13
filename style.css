@@ -569,10 +569,11 @@ kbd {
 /* ══ RESPONSIVE ══ */
 @media (max-width: 540px) {
   /* Page: top padding for header, bottom for fixed dpad */
+  /* Layout props applied always; display is controlled by .pg / .pg.on rules */
   #pg-game {
     padding: 52px 0 152px;
     min-height: 100dvh;
-    display: flex; flex-direction: column; align-items: center;
+    flex-direction: column; align-items: center;
     overflow-x: hidden; overflow-y: hidden;
   }
 

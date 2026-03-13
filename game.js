@@ -164,43 +164,6 @@ function myRank(){
   const i=LB.findIndex(e=>e.name===P.name);
   return i===-1?LB.length+1:i+1;
 }
-
-function esc(s){
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function renderLB(){
-  const pod=document.getElementById('podium');
-  const tbl=document.getElementById('lb-tbl');
-  if(!LB.length){
-    pod.innerHTML='';
-    tbl.innerHTML='<div class="lb-empty">No wizards yet. Be the first! 🪄</div>';
-    return;
-  }
-  const top=LB.slice(0,Math.min(3,LB.length));
-  const medals=['👑','🥈','🥉'],cls=['pod1','pod2','pod3'];
-  pod.innerHTML=top.map((e,i)=>`
-    <div class="pod ${cls[i]}">
-      <div class="pod-crown">${medals[i]}</div>
-      <img class="pod-av" src="${makeAvatar(e.name)}" alt="">
-      <div class="pod-nm">${esc(e.name)}</div>
-      <div class="pod-sc">${Number(e.score).toLocaleString()}</div>
-    </div>`).join('');
-
-  const rest=LB.slice(3);
-  if(!rest.length){ tbl.innerHTML=''; return; }
-  tbl.innerHTML=rest.map((e,i)=>{
-    const rk=i+4, isMe=e.name===P.name;
-    return `<div class="lb-row${isMe?' me':''}">
-      <span class="lb-rk rn">#${rk}</span>
-      <img class="lb-av" src="${makeAvatar(e.name)}" alt="">
-      <span class="lb-nm">${esc(e.name)}</span>
-      <span class="lb-sc">${Number(e.score).toLocaleString()}</span>
-    </div>`;
-  }).join('');
-}
 function savePlayerProfile(){
   try { localStorage.setItem(PLAYER_KEY, JSON.stringify({name:P.name, avatar:P.avatar||''})); } catch {}
 }
@@ -1008,18 +971,20 @@ function updateHUD(){
 }
 
 /* ── GAME OVER ── */
-function gameOver(){
+async function gameOver(){
   state='over';
   clearTimeout(lockTO); lockTO=null; lockResets=0;
   clearInterval(lpTipTimer); lpTipTimer=null;
   playSound('over');
-  try { saveLB(); } catch {}
   document.getElementById('oc-sc').textContent = score.toLocaleString();
   document.getElementById('oc-bs').textContent = P.best.toLocaleString();
   document.getElementById('oc-ln').textContent = lines;
   document.getElementById('oc-lv').textContent = level;
-  document.getElementById('oc-rnk').textContent = `🏆 Rank #${myRank()}`;
+  document.getElementById('oc-rnk').textContent = '🏆 Rank #...';
   nav('pg-over');
+  // Save score then update rank with real data
+  try { await saveLB(); } catch {}
+  document.getElementById('oc-rnk').textContent = '🏆 Rank #' + myRank();
 }
 
 function playAgain(){ nav('pg-game'); initGame(); }

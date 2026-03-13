@@ -121,9 +121,9 @@
       <button class="mb" ontouchstart="tap(event,'rccw')" onclick="tap(null,'rccw')">↺</button>
     </div>
     <div class="dp-row">
-      <button class="mb" ontouchstart="begR(event,'L')" ontouchend="endR()" onmousedown="begR(null,'L')" onmouseup="endR()">←</button>
-      <button class="mb" ontouchstart="begR(event,'D')" ontouchend="endR()" onmousedown="begR(null,'D')" onmouseup="endR()">↓</button>
-      <button class="mb" ontouchstart="begR(event,'R')" ontouchend="endR()" onmousedown="begR(null,'R')" onmouseup="endR()">→</button>
+      <button class="mb" ontouchstart="begR(event,'L')" ontouchend="endR()" ontouchcancel="endR()" onmousedown="begR(null,'L')" onmouseup="endR()">←</button>
+      <button class="mb" ontouchstart="begR(event,'D')" ontouchend="endR()" ontouchcancel="endR()" onmousedown="begR(null,'D')" onmouseup="endR()">↓</button>
+      <button class="mb" ontouchstart="begR(event,'R')" ontouchend="endR()" ontouchcancel="endR()" onmousedown="begR(null,'R')" onmouseup="endR()">→</button>
     </div>
     <div class="dp-row">
       <button class="mb wide drp" ontouchstart="tap(event,'hd')" onclick="tap(null,'hd')">⬇ HARD DROP</button>
