@@ -476,9 +476,17 @@ function initGame(){
   ncv    = document.getElementById('nc');
 
   // Compute CELL size to fit screen
-  const maxH = window.innerHeight - 160;
-  const maxW = Math.min(window.innerWidth * 0.52, 290);
-  CELL = Math.max(18, Math.min(32, Math.floor(Math.min(maxH/ROWS, maxW/COLS))));
+  const isMobile = window.innerWidth <= 540;
+  let maxH, maxW;
+  if(isMobile){
+    // Reserve: header ~50px, dpad ~110px, gaps ~20px
+    maxH = window.innerHeight - 185;
+    maxW = window.innerWidth - 90; // right panel ~78px + gaps
+  } else {
+    maxH = window.innerHeight - 160;
+    maxW = Math.min(window.innerWidth * 0.52, 290);
+  }
+  CELL = Math.max(isMobile?14:18, Math.min(isMobile?30:32, Math.floor(Math.min(maxH/ROWS, maxW/COLS))));
   canvas.width  = COLS * CELL;
   canvas.height = ROWS * CELL;
   ctx  = canvas.getContext('2d');
