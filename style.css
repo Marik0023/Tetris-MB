@@ -635,15 +635,18 @@ kbd {
   }
   .sb { padding: 6px 8px; font-size: 0.58rem; }
 
-  /* D-pad — fixed at bottom of screen */
+  /* D-pad — fixed at bottom, only when game is active */
   .dpad {
-    display: block;
+    display: none;
     position: fixed;
     bottom: 0; left: 0; right: 0;
     padding: 7px 0 max(8px, env(safe-area-inset-bottom));
     background: rgba(3,3,8,0.98);
     border-top: 1px solid rgba(0,245,212,0.1);
     z-index: 40;
+  }
+  #pg-game.on .dpad {
+    display: block;
   }
   .dp-row { gap: 8px; margin-bottom: 5px; }
   .dp-row:last-child { margin-bottom: 0; }
