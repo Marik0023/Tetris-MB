@@ -568,81 +568,87 @@ kbd {
 
 /* ══ RESPONSIVE ══ */
 @media (max-width: 540px) {
-  /* Page setup — flex column, fill viewport */
+  /* Page: top padding for header, bottom for fixed dpad */
   #pg-game {
-    padding: 0;
-    display: flex; flex-direction: column;
-    height: 100dvh; height: 100vh;
-    overflow: hidden;
+    padding: 52px 0 152px;
+    min-height: 100dvh;
+    display: flex; flex-direction: column; align-items: center;
+    overflow-x: hidden; overflow-y: hidden;
   }
 
-  /* Header compact */
+  /* Header — fixed at top */
   .gh {
-    position: relative; top: unset; left: unset; right: unset;
-    flex: 0 0 auto;
-    padding: 8px 12px;
-    background: rgba(3,3,8,0.95);
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 52px; padding: 0 12px;
+    background: rgba(3,3,8,0.97);
     border-bottom: 1px solid rgba(0,245,212,0.08);
-    pointer-events: auto;
-    z-index: 25;
+    z-index: 50; pointer-events: auto;
   }
-  .gh-logo img { width: 54px; }
+  .gh-logo img { width: 56px; }
   .gh-av { width: 30px; height: 30px; }
   .gh-nm { max-width: 80px; font-size: 0.62rem; }
   .gh-right { gap: 6px; }
 
-  /* Main area = canvas + right panel, fills remaining space */
+  /* Game body: column, canvas + compact stat strip */
   .gbody {
-    flex: 1 1 auto;
-    min-height: 0;
-    flex-direction: row;
-    align-items: stretch;
-    gap: 6px;
-    padding: 6px 6px 0;
-    overflow: hidden;
-  }
-
-  /* Canvas wrapper — takes all available height */
-  .bwrap {
-    flex: 1 1 auto;
-    min-width: 0;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .bwrap-in { height: 100%; }
-  #gc { height: 100%; width: auto !important; }
-
-  /* Right panel — narrow vertical strip */
-  .sp {
-    flex: 0 0 72px;
     flex-direction: column;
-    flex-wrap: nowrap;
+    align-items: center;
     gap: 5px;
-    min-width: 72px;
-    max-width: 72px;
-    overflow: hidden;
+    width: 100%;
+    padding: 6px 8px 0;
   }
-  .sc { flex: 0 0 auto; min-width: unset; padding: 5px 6px; }
-  .sc-label { font-size: 0.38rem; }
-  .sc-val { font-size: 0.9rem; }
-  .nc-card { flex: 0 0 auto; min-width: unset; padding: 5px 4px; }
-  .nc-label { font-size: 0.38rem; }
-  #nc { width: 58px !important; height: 46px !important; }
-  /* hide key hints */
-  .kh { display: none; }
-  /* shrink buttons */
-  .gb { font-size: 0.62rem; padding: 7px 4px; }
+  .lp { display: none; }
 
-  /* D-pad — fixed at bottom */
+  /* Canvas stays centered */
+  .bwrap { flex: 0 0 auto; }
+
+  /* Stats + next + buttons all in one horizontal wrap row */
+  .sp {
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-width: unset;
+    max-width: 100%;
+    width: 100%;
+    gap: 4px;
+  }
+  .sc {
+    flex: 1 1 60px;
+    min-width: 60px;
+    padding: 5px 7px;
+  }
+  .sc label { font-size: 0.4rem; margin-bottom: 1px; }
+  .sv { font-size: 0.88rem; }
+  .lbar { margin-top: 3px; }
+  .nc-card {
+    flex: 0 0 auto;
+    padding: 5px 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nc-card label { margin-bottom: 0; }
+  #nc { width: 64px !important; height: 50px !important; margin: 0; }
+  .kh { display: none; }
+  .sp-btns {
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 80px;
+  }
+  .sb { padding: 6px 8px; font-size: 0.58rem; }
+
+  /* D-pad — fixed at bottom of screen */
   .dpad {
     display: block;
-    flex: 0 0 auto;
-    padding: 6px 8px 8px;
-    background: rgba(3,3,8,0.96);
-    border-top: 1px solid rgba(0,245,212,0.08);
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 7px 0 max(8px, env(safe-area-inset-bottom));
+    background: rgba(3,3,8,0.98);
+    border-top: 1px solid rgba(0,245,212,0.1);
+    z-index: 40;
   }
-  .dp-row { gap: 6px; margin-bottom: 5px; }
-  .mb { width: 52px; height: 44px; font-size: 1.1rem; border-radius: 6px; }
-  .mb.wide { width: 120px; font-size: 0.78rem; }
+  .dp-row { gap: 8px; margin-bottom: 5px; }
+  .dp-row:last-child { margin-bottom: 0; }
+  .mb { width: 58px; height: 46px; font-size: 1.2rem; border-radius: 6px; }
+  .mb.wide { width: 144px; font-size: 0.82rem; }
 }
 
 ::-webkit-scrollbar { width: 3px; }

@@ -479,14 +479,15 @@ function initGame(){
   const isMobile = window.innerWidth <= 540;
   let maxH, maxW;
   if(isMobile){
-    // Reserve: header ~50px, dpad ~110px, gaps ~20px
-    maxH = window.innerHeight - 185;
-    maxW = window.innerWidth - 90; // right panel ~78px + gaps
+    // header=52, stats+next row≈80, dpad=152, gaps≈24
+    maxH = window.innerHeight - 52 - 80 - 152 - 24;
+    maxW = window.innerWidth - 20;
   } else {
     maxH = window.innerHeight - 160;
     maxW = Math.min(window.innerWidth * 0.52, 290);
   }
-  CELL = Math.max(isMobile?14:18, Math.min(isMobile?30:32, Math.floor(Math.min(maxH/ROWS, maxW/COLS))));
+  CELL = Math.max(isMobile ? 14 : 18, Math.min(isMobile ? 30 : 32,
+    Math.floor(Math.min(maxH / ROWS, maxW / COLS))));
   canvas.width  = COLS * CELL;
   canvas.height = ROWS * CELL;
   ctx  = canvas.getContext('2d');
