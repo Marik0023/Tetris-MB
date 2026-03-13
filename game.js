@@ -106,76 +106,110 @@ document.getElementById('logo-g').src=LOGO;
    PLAYER STATE & LEADERBOARD
 ───────────────────────────────────────── */
 const PLAYER_KEY='magic_tetris_player';
-const LB_KEY='magic_tetris_lb';
-const LEGACY_LB_KEY='mt2_lb';
+/* ─────────────────────────────────────────
+   SUPABASE — Global Leaderboard
+───────────────────────────────────────── */
+const SB_URL = 'https://havwsarcfpyiwyitpasq.supabase.co';
+const SB_KEY = 'sb_publishable_orLD_bHxYWr4UeYFBLaqAA_35qJAv62';
+const SB_HDR = {
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Content-Type': 'application/json'
+};
+
 const P={name:'',avatar:'',best:0};
-let LB=loadLB();
-let lbFrom='pg-start'; // which page opened leaderboard
+let LB=[];          // cached from Supabase
+let lbFrom='pg-start';
 
-function safeAvatarForStorage(dataUrl=''){
-  if(typeof dataUrl !== 'string') return '';
-  if(!dataUrl.startsWith('data:')) return dataUrl;
-  return dataUrl.length > 70000 ? '' : dataUrl;
+async function fetchLB(){
+  try{
+    const res=await fetch(
+      SB_URL+'/rest/v1/leaderboard?select=name,score,lines,level,created_at&order=score.desc&limit=50',
+      {headers:SB_HDR}
+    );
+    if(res.ok) LB=await res.json();
+  }catch{}
 }
 
-function normalizeLBEntry(e={}){
-  const avatar = safeAvatarForStorage(e.avatar || e.avatarDataUrl || '');
-  return {
-    ...e,
-    name: e.name || e.nickname || '',
-    nickname: e.nickname || e.name || '',
-    avatar,
-    avatarDataUrl: avatar,
-    score: Number(e.score || 0),
-    lines: Number(e.lines || 0),
-    level: Number(e.level || 1),
-    rank: e.rank || 'Wizard',
-    date: Number(e.date || Date.now())
-  };
-}
-
-function loadLB(){
-  try {
-    const raw = localStorage.getItem(LB_KEY) || localStorage.getItem(LEGACY_LB_KEY) || '[]';
-    const parsed = JSON.parse(raw) || [];
-    return parsed.map(normalizeLBEntry).sort((a,b)=>b.score-a.score).slice(0,50);
-  } catch {
-    return [];
-  }
-}
-function writeLB(){
-  const clean = LB.map(normalizeLBEntry).sort((a,b)=>b.score-a.score).slice(0,50);
-  LB = clean;
-  try {
-    localStorage.setItem(LB_KEY, JSON.stringify(clean));
-    try { localStorage.removeItem(LEGACY_LB_KEY); } catch {}
-    return true;
-  } catch {
-    try {
-      const noAvatars = clean.map(e => ({ ...e, avatar:'', avatarDataUrl:'' }));
-      LB = noAvatars;
-      localStorage.setItem(LB_KEY, JSON.stringify(noAvatars));
-      try { localStorage.removeItem(LEGACY_LB_KEY); } catch {}
-      return true;
-    } catch {
-      return false;
+async function fetchPlayerBest(name){
+  try{
+    const res=await fetch(
+      SB_URL+'/rest/v1/leaderboard?select=score&name=eq.'+encodeURIComponent(name)+'&limit=1',
+      {headers:SB_HDR}
+    );
+    if(res.ok){
+      const d=await res.json();
+      return d[0]?.score||0;
     }
+  }catch{}
+  return 0;
+}
+
+async function saveLB(){
+  if(!P.name||!P.best) return;
+  try{
+    // Only save if this is a new personal best
+    const cur=await fetchPlayerBest(P.name);
+    if(P.best<=cur) return;
+    await fetch(SB_URL+'/rest/v1/leaderboard',{
+      method:'POST',
+      headers:{...SB_HDR,'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({name:P.name, score:P.best, lines, level})
+    });
+    await fetchLB();
+  }catch{}
+}
+
+function myRank(){
+  const i=LB.findIndex(e=>e.name===P.name);
+  return i===-1?LB.length+1:i+1;
+}
+
+function esc(s){
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderLB(){
+  const pod=document.getElementById('podium');
+  const tbl=document.getElementById('lb-tbl');
+  if(!LB.length){
+    pod.innerHTML='';
+    tbl.innerHTML='<div class="lb-empty">No wizards yet. Be the first! 🪄</div>';
+    return;
   }
+  const top=LB.slice(0,Math.min(3,LB.length));
+  const medals=['👑','🥈','🥉'],cls=['pod1','pod2','pod3'];
+  pod.innerHTML=top.map((e,i)=>`
+    <div class="pod ${cls[i]}">
+      <div class="pod-crown">${medals[i]}</div>
+      <img class="pod-av" src="${makeAvatar(e.name)}" alt="">
+      <div class="pod-nm">${esc(e.name)}</div>
+      <div class="pod-sc">${Number(e.score).toLocaleString()}</div>
+    </div>`).join('');
+
+  const rest=LB.slice(3);
+  if(!rest.length){ tbl.innerHTML=''; return; }
+  tbl.innerHTML=rest.map((e,i)=>{
+    const rk=i+4, isMe=e.name===P.name;
+    return `<div class="lb-row${isMe?' me':''}">
+      <span class="lb-rk rn">#${rk}</span>
+      <img class="lb-av" src="${makeAvatar(e.name)}" alt="">
+      <span class="lb-nm">${esc(e.name)}</span>
+      <span class="lb-sc">${Number(e.score).toLocaleString()}</span>
+    </div>`;
+  }).join('');
 }
 function savePlayerProfile(){
-  const payload = {name:P.name, avatar:safeAvatarForStorage(P.avatar)};
-  try {
-    localStorage.setItem(PLAYER_KEY, JSON.stringify(payload));
-  } catch {
-    try { localStorage.setItem(PLAYER_KEY, JSON.stringify({name:P.name, avatar:''})); } catch {}
-  }
+  try { localStorage.setItem(PLAYER_KEY, JSON.stringify({name:P.name, avatar:P.avatar||''})); } catch {}
 }
 function loadPlayerProfile(){
   try {
-    const data = JSON.parse(localStorage.getItem(PLAYER_KEY) || 'null');
+    const data=JSON.parse(localStorage.getItem(PLAYER_KEY)||'null');
     if(!data) return;
-    P.name = data.name || '';
-    P.avatar = safeAvatarForStorage(data.avatar || '');
+    P.name=data.name||'';
+    P.avatar=data.avatar||'';
   } catch {}
 }
 async function shrinkImage(file, maxSize=128, quality=.82){
@@ -252,32 +286,35 @@ function nav(id){
   document.getElementById(id).classList.add('on');
 }
 
-function openLB(from){
+async function openLB(from){
   lbFrom=from;
-  renderLB();
   nav('pg-lb');
+  document.getElementById('podium').innerHTML='';
+  document.getElementById('lb-tbl').innerHTML='<div class="lb-empty">🌐 Loading global scores…</div>';
+  await fetchLB();
+  renderLB();
 }
 function closeLB(){ nav(lbFrom); }
 
 /* ─────────────────────────────────────────
    START
 ───────────────────────────────────────── */
-function onStart(){
+async function onStart(){
   const nick=document.getElementById('nick').value.trim();
   if(!nick){ document.getElementById('nick').focus(); return; }
   P.name=nick;
   if(!P.avatar) P.avatar=makeAvatar(nick);
   savePlayerProfile();
   applyPlayerProfileToStart();
-  const ex=LB.find(e=>(e.name||e.nickname)===nick);
-  P.best=ex?Number(ex.score||0):0;
+
+  // Fetch this player's best score from Supabase
+  P.best = await fetchPlayerBest(nick);
 
   document.getElementById('gh-nm').textContent=nick;
   document.getElementById('gh-av').src=P.avatar;
   document.getElementById('oc-av').src=P.avatar;
   document.getElementById('oc-nm').textContent=nick;
 
-  // Left panel
   const lpAv=document.getElementById('lp-av');
   const lpNm=document.getElementById('lp-nm');
   if(lpAv) lpAv.src=P.avatar;
@@ -287,39 +324,8 @@ function onStart(){
   initGame();
 }
 
-/* ─────────────────────────────────────────
-   LB helpers
-───────────────────────────────────────── */
-function saveLB(){
-  const i=LB.findIndex(e=>(e.name||e.nickname)===P.name);
-  const entry = {
-    name:P.name,
-    nickname:P.name,
-    avatar:P.avatar,
-    avatarDataUrl:P.avatar,
-    score:P.best,
-    lines,
-    level,
-    rank:`Rank #${Math.max(1,myRank())}`,
-    date:Date.now()
-  };
-  if(i===-1){
-    LB.push(entry);
-  } else if(P.best >= Number(LB[i].score||0)) {
-    LB[i] = { ...LB[i], ...entry };
-  } else {
-    LB[i].avatar=P.avatar;
-    LB[i].avatarDataUrl=P.avatar;
-  }
-  LB.sort((a,b)=>b.score-a.score);
-  if(LB.length>50) LB.length=50;
-  writeLB();
-}
 
-function myRank(){
-  const i=LB.findIndex(e=>(e.name||e.nickname)===P.name);
-  return i===-1?LB.length+1:i+1;
-}
+
 
 function esc(s){
   return String(s)
@@ -964,7 +970,7 @@ function gameOver(){
   clearTimeout(lockTO); lockTO=null; lockResets=0;
   clearInterval(lpTipTimer); lpTipTimer=null;
   playSound('over');
-  try { saveLB(); } catch {}
+  try { saveLB(); } catch {} // async, saves to Supabase in background
   const rank = myRank();
   document.getElementById('oc-sc').textContent = score.toLocaleString();
   document.getElementById('oc-bs').textContent = P.best.toLocaleString();
