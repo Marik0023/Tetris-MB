@@ -694,9 +694,22 @@ function nextPiece(){
   nxt = spawnPiece(rndKey());
   dropAcc = 0;
 
-  // Top-out: spawn position already occupied
+  // Top-out check 1: spawn position already occupied
   if(collides(cur.row, cur.col, cur.sh)){
     gameOver(); return;
+  }
+
+  // Top-out check 2: piece spawned but immediately can't move down
+  // AND is touching the very top zone (row 0 or 1)
+  if(collides(cur.row+1, cur.col, cur.sh)){
+    // Check if any part of the piece is in rows 0 or 1
+    let inTopZone = false;
+    for(let r=0; r<cur.sh.length; r++){
+      for(let c=0; c<cur.sh[r].length; c++){
+        if(cur.sh[r][c] && (cur.row+r) <= 1){ inTopZone=true; break; }
+      }
+    }
+    if(inTopZone){ gameOver(); return; }
   }
 
   renderNext();
