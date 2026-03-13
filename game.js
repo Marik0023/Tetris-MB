@@ -637,6 +637,13 @@ function lock(){
   clearTimeout(lockTO); lockTO=null; lockResets=0;
   playSound('lock');
 
+  // Top-out: any cell locked into rows 0 or 1 = stack reached ceiling
+  let toppedOut = false;
+  for(let c=0; c<COLS; c++){
+    if(board[0][c] !== '' || board[1][c] !== ''){ toppedOut=true; break; }
+  }
+  if(toppedOut){ gameOver(); return; }
+
   // Find complete rows
   const full = [];
   for(let r=0; r<ROWS; r++){
