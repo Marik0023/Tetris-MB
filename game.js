@@ -991,7 +991,7 @@ function playAgain(){ nav('pg-game'); initGame(); }
 
 /* ── DOWNLOAD RESULT – MONOLITH card ── */
 function downloadResult(){
-  const W=480, H=580;
+  const W=480, H=620;
   const cv=document.createElement('canvas');
   cv.width=W; cv.height=H;
   const cx=cv.getContext('2d');
@@ -1088,19 +1088,19 @@ function downloadResult(){
   function drawContent(logoImg){
     // Logo
     if(logoImg){
-      const lH2=82, scale=lH2/logoImg.naturalHeight;
+      const lH2=120, scale=lH2/logoImg.naturalHeight;
       const lW2=Math.round(logoImg.naturalWidth*scale);
       cx.save();
-      cx.shadowColor='rgba(0,245,212,0.5)'; cx.shadowBlur=24;
-      cx.drawImage(logoImg, Math.round((W-lW2)/2), 16, lW2, lH2);
+      cx.shadowColor='rgba(0,245,212,0.5)'; cx.shadowBlur=30;
+      cx.drawImage(logoImg, Math.round((W-lW2)/2), 10, lW2, lH2);
       cx.restore();
     } else {
       cx.save();
-      cx.font='bold 20px monospace';
+      cx.font='bold 24px monospace';
       cx.fillStyle='#00F5D4';
       cx.shadowColor='rgba(0,245,212,0.5)'; cx.shadowBlur=14;
       cx.textAlign='center';
-      cx.fillText('MAGIC TETRIS', W/2, 52);
+      cx.fillText('MAGIC TETRIS', W/2, 70);
       cx.restore();
     }
 
@@ -1108,7 +1108,7 @@ function downloadResult(){
     const dotCols=['#00F5D4','#9B72FF','#FFC700','#FF3A5C','#00F5D4'];
     dotCols.forEach((c,i)=>{
       cx.fillStyle=c; cx.globalAlpha=0.6;
-      cx.beginPath(); cx.arc(W/2+(i-2)*14, 106, 2, 0, Math.PI*2); cx.fill();
+      cx.beginPath(); cx.arc(W/2+(i-2)*14, 140, 2, 0, Math.PI*2); cx.fill();
     });
     cx.globalAlpha=1;
 
@@ -1117,11 +1117,11 @@ function downloadResult(){
     cx.font='bold 32px "Bebas Neue",cursive,monospace';
     cx.shadowColor='rgba(255,58,92,0.5)'; cx.shadowBlur=20;
     cx.fillStyle='#FF3A5C'; cx.textAlign='center';
-    cx.fillText('GAME OVER', W/2, 140);
+    cx.fillText('GAME OVER', W/2, 172);
     cx.restore();
 
     // ── Avatar circle ──
-    const avX=W/2, avY=200, avR=38;
+    const avX=W/2, avY=232, avR=38;
     cx.save();
     cx.shadowColor='rgba(0,245,212,0.5)'; cx.shadowBlur=24;
     cx.strokeStyle='rgba(0,245,212,0.7)'; cx.lineWidth=2;
@@ -1147,7 +1147,7 @@ function downloadResult(){
       // Player name
       cx.font='bold 13px "JetBrains Mono",monospace';
       cx.fillStyle='#EDEAF8'; cx.textAlign='center';
-      cx.fillText(P.name||'Wizard', W/2, 258);
+      cx.fillText(P.name||'Wizard', W/2, 290);
 
       // ── Stats grid 2×2 ──
       const stats=[
@@ -1156,7 +1156,7 @@ function downloadResult(){
         {label:'LINES', val:String(lines),  col:'#9B72FF'},
         {label:'LEVEL', val:String(level),  col:'#00F5D4'},
       ];
-      const gx=40, gy=274, gw=(W-80-10)/2, gh=72, gGap=10;
+      const gx=40, gy=306, gw=(W-80-10)/2, gh=72, gGap=10;
       stats.forEach((st,i)=>{
         const col=i%2, row=Math.floor(i/2);
         const bx=gx+col*(gw+gGap), by=gy+row*(gh+gGap);

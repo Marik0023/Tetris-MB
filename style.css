@@ -151,7 +151,7 @@ body::after {
   50% { transform: translateY(-10px); }
 }
 .logo-anim img {
-  width: 190px; max-width: 68vw;
+  width: 260px; max-width: 78vw;
   filter:
     drop-shadow(0 0 18px rgba(0, 245, 212, 0.55))
     drop-shadow(0 0 50px rgba(0, 245, 212, 0.18))
