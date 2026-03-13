@@ -284,6 +284,7 @@ function makeAvatar(name){
 function nav(id){
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.getElementById(id).classList.add('on');
+  window.scrollTo(0, 0);
 }
 
 async function openLB(from){
@@ -979,14 +980,13 @@ function gameOver(){
   clearTimeout(lockTO); lockTO=null; lockResets=0;
   clearInterval(lpTipTimer); lpTipTimer=null;
   playSound('over');
-  try { saveLB(); } catch {} // async, saves to Supabase in background
-  const rank = myRank();
+  try { saveLB(); } catch {}
   document.getElementById('oc-sc').textContent = score.toLocaleString();
   document.getElementById('oc-bs').textContent = P.best.toLocaleString();
   document.getElementById('oc-ln').textContent = lines;
   document.getElementById('oc-lv').textContent = level;
-  document.getElementById('oc-rnk').textContent = `🏆 Rank #${rank}`;
-  setTimeout(() => nav('pg-over'), 180);
+  document.getElementById('oc-rnk').textContent = `🏆 Rank #${myRank()}`;
+  nav('pg-over');
 }
 
 function playAgain(){ nav('pg-game'); initGame(); }

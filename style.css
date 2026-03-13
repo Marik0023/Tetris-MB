@@ -635,6 +635,10 @@ kbd {
   }
   .sb { padding: 6px 8px; font-size: 0.58rem; }
 
+  /* Game over page — account for fixed header */
+  #pg-over { padding-top: 20px; }
+  .oc { width: 92%; max-width: 360px; }
+
   /* D-pad — fixed at bottom, only when game is active */
   .dpad {
     display: none;
